@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>单词消消乐</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Comic+Neue&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <div class="menu-bar">
+            <div class="menu-options">
+                <label for="grade-select">年级：</label>
+                <select id="grade-select">
+                    <!-- 选项将由JavaScript动态生成 -->
+                </select>
+            </div>
+            <div class="menu-options">
+                <label for="word-count">单词数量：</label>
+                <select id="word-count">
+                    <option value="5">5个</option>
+                    <option value="10" selected>10个</option>
+                    <option value="15">15个</option>
+                    <option value="20">20个</option>
+                </select>
+            </div>
+            <div class="menu-options">
+                <label for="difficulty">难度：</label>
+                <select id="difficulty">
+                    <option value="easy">简单</option>
+                    <option value="medium" selected>中等</option>
+                    <option value="hard">困难</option>
+                </select>
+            </div>
+        </div>
+        
+        <header>
+            <div class="game-info">
+                <div class="timer">
+                    <span id="timer-label">剩余时间：</span>
+                    <span id="timer-value">60</span>
+                    <span>秒</span>
+                </div>
+                <div class="score">
+                    <span>得分：</span>
+                    <span id="score-value">0</span>
+                </div>
+            </div>
+            <div class="controls">
+                <button id="start-game">重新开始</button>
+                <input type="file" id="file-input" accept=".xlsx,.xls,.csv" style="display: none;">
+                <button id="import-file">导入Excel</button>
+                <button id="download-template">下载模板</button>
+            </div>
+        </header>
+        
+        <div class="game-board">
+            <div class="card-column" id="words-column">
+                <h2>英文单词</h2>
+                <div class="cards-container" id="words-container">
+                    <!-- 单词卡片将动态生成 -->
+                </div>
+            </div>
+            <div class="card-column" id="translations-column">
+                <h2>中文释义</h2>
+                <div class="cards-container" id="translations-container">
+                    <!-- 释义卡片将动态生成 -->
+                </div>
+            </div>
+        </div>
+        
+        <div id="combo-effect" class="combo-effect"></div>
+        <div id="flash-effect" class="flash-effect"></div>
+    </div>
+    
+    <!-- 撒花效果容器 -->
+    <div id="confetti-container"></div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html> 

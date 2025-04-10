@@ -1,0 +1,617 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Comic Neue', 'Comic Sans MS', cursive, sans-serif;
+}
+
+body {
+    background-color: #f8f9ff;
+    color: #333;
+    line-height: 1.6;
+    background-image: 
+        radial-gradient(circle at 10% 20%, rgba(120, 140, 255, 0.03) 0%, transparent 25%),
+        radial-gradient(circle at 90% 80%, rgba(255, 120, 120, 0.03) 0%, transparent 25%);
+    background-attachment: fixed;
+}
+
+.container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+}
+
+/* 顶部菜单区域 */
+.menu-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding: 10px 15px;
+    background: linear-gradient(135deg, #f0f2ff 0%, #ffffff 100%);
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.menu-options {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.menu-options label {
+    font-size: 0.9rem;
+    color: #555;
+}
+
+.menu-options select {
+    padding: 5px 10px;
+    border-radius: 5px;
+    border: 1px solid #ddd;
+    font-size: 0.9rem;
+    background-color: white;
+    cursor: pointer;
+}
+
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding: 12px 18px;
+    background: linear-gradient(135deg, #e0e4ff 0%, #f5f5ff 100%);
+    border-radius: 12px;
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.08);
+}
+
+.game-info {
+    display: flex;
+    gap: 15px;
+}
+
+.timer, .score {
+    font-size: 1.1rem;
+    font-weight: bold;
+}
+
+#timer-value, #score-value {
+    color: #4040cc;
+}
+
+.controls {
+    display: flex;
+    gap: 8px;
+}
+
+button {
+    padding: 6px 12px;
+    background: linear-gradient(135deg, #6e78ff 0%, #4c50cc 100%);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    background: linear-gradient(135deg, #7a84ff 0%, #5a5edb 100%);
+}
+
+.game-board {
+    display: flex;
+    justify-content: space-between;
+    gap: 25px;
+    position: relative;
+}
+
+.card-column {
+    flex: 1;
+    text-align: center;
+    background: linear-gradient(135deg, rgba(255,255,255,0.8) 0%, rgba(245,247,255,0.9) 100%);
+    border-radius: 15px;
+    padding: 15px 10px;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.04);
+    position: relative;
+    overflow: hidden;
+}
+
+.card-column::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: 
+        radial-gradient(circle at 10% 20%, rgba(99, 120, 255, 0.03) 0%, transparent 50%),
+        radial-gradient(circle at 80% 70%, rgba(255, 99, 99, 0.03) 0%, transparent 50%);
+    opacity: 0.6;
+    z-index: 0;
+}
+
+.card-column:first-child::before {
+    background-image: 
+        radial-gradient(circle at 10% 20%, rgba(255, 99, 99, 0.05) 0%, transparent 50%),
+        radial-gradient(circle at 90% 80%, rgba(255, 180, 180, 0.07) 0%, transparent 50%);
+}
+
+.card-column:last-child::before {
+    background-image: 
+        radial-gradient(circle at 10% 20%, rgba(99, 220, 210, 0.05) 0%, transparent 50%),
+        radial-gradient(circle at 90% 80%, rgba(120, 230, 220, 0.07) 0%, transparent 50%);
+}
+
+h2 {
+    margin-bottom: 15px;
+    color: #4040cc;
+    font-size: 1.2rem;
+    position: relative;
+    z-index: 1;
+}
+
+.cards-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    justify-content: center;
+    position: relative;
+    z-index: 2;
+}
+
+/* 新卡片样式 - 类似截图中的按钮风格 */
+.card {
+    background: linear-gradient(135deg, #ff7e7e 0%, #ff9e9e 100%);
+    border-radius: 30px;
+    padding: 8px 20px;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    position: relative;
+    font-size: 1rem;
+    min-width: 100px;
+    height: auto;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    color: white;
+    font-weight: 500;
+    box-shadow: 0 3px 5px rgba(0, 0, 0, 0.1);
+    margin-bottom: 10px;
+}
+
+/* 右侧翻译卡片使用不同颜色 */
+#translations-container .card {
+    background: linear-gradient(135deg, #4ecdc4 0%, #56e0d6 100%);
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* 单词卡片悬停时显示朗读图标提示 */
+.word-card:hover::after {
+    content: "🔊";
+    position: absolute;
+    right: 8px;
+    font-size: 0.8rem;
+    opacity: 0.7;
+}
+
+.card.selected {
+    opacity: 0.8;
+    box-shadow: 0 0 0 2px #fff, 0 0 0 4px #6060ff;
+}
+
+.card.matched {
+    animation: fadeOut 1s forwards;
+    pointer-events: none;
+}
+
+.card.error {
+    animation: shake 0.5s;
+}
+
+.result-icon {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 1.8rem;
+    opacity: 0;
+    z-index: 10;
+}
+
+.result-icon.correct {
+    color: #00cc00;
+    animation: showIcon 1s forwards;
+}
+
+.result-icon.incorrect {
+    color: #cc0000;
+    animation: showIcon 1s forwards;
+}
+
+/* 模态框样式 */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 100;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+.modal-content {
+    background-color: white;
+    margin: 10% auto;
+    padding: 20px;
+    border-radius: 12px;
+    width: 80%;
+    max-width: 550px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+.close-modal {
+    float: right;
+    font-size: 24px;
+    font-weight: bold;
+    cursor: pointer;
+    color: #888;
+    transition: color 0.2s;
+}
+
+.close-modal:hover {
+    color: #333;
+}
+
+textarea {
+    width: 100%;
+    margin: 15px 0;
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid #ddd;
+    font-family: inherit;
+}
+
+/* 组合效果和闪光特效 */
+.combo-effect {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 50;
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: #ff4d4d;
+    opacity: 0;
+    text-shadow: 0 0 10px #ffcc00;
+}
+
+.flash-effect {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 40;
+    pointer-events: none;
+    opacity: 0;
+    background: radial-gradient(circle, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0) 70%);
+}
+
+/* 撒花特效 */
+#confetti-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 100;
+    overflow: hidden;
+}
+
+.confetti {
+    position: absolute;
+    top: -10px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    animation: confettiFall linear forwards;
+    z-index: 100;
+}
+
+/* 连接线样式 */
+.connection-line {
+    position: absolute;
+    background: linear-gradient(90deg, #6bc576, #8fdb9a);
+    height: 5px;
+    transform-origin: left center;
+    border-radius: 3px;
+    z-index: 30;
+    box-shadow: 0 0 8px rgba(107, 197, 118, 0.6);
+    animation: fadeIn 0.2s ease-out forwards;
+    opacity: 0;
+}
+
+/* 动画定义 */
+@keyframes fadeOut {
+    0% { opacity: 1; }
+    100% { opacity: 0; visibility: hidden; }
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+    20%, 40%, 60%, 80% { transform: translateX(5px); }
+}
+
+@keyframes showIcon {
+    0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+    50% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
+    100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+@keyframes comboEffect {
+    0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+    50% { opacity: 1; transform: translate(-50%, -50%) scale(1.5); }
+    100% { opacity: 0; transform: translate(-50%, -50%) scale(2); }
+}
+
+@keyframes flashBorder {
+    0% { opacity: 0; }
+    50% { opacity: 0.8; }
+    100% { opacity: 0; }
+}
+
+@keyframes confettiFall {
+    0% {
+        transform: translateY(0) rotate(0deg);
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(100vh) rotate(720deg);
+        opacity: 0;
+    }
+}
+
+@keyframes fadeIn {
+    0% {
+        opacity: 0;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
+@keyframes fadeOutLine {
+    0% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
+    }
+}
+
+/* 错误记录面板样式 */
+.error-records-panel {
+    margin-top: 30px;
+    padding: 15px;
+    background: linear-gradient(135deg, #ffe9e9 0%, #fff5f5 100%);
+    border-radius: 12px;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
+}
+
+.error-records-panel h2 {
+    color: #e86464;
+    margin-bottom: 12px;
+    font-size: 1.2rem;
+    text-align: center;
+}
+
+.error-records-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 200px;
+    overflow-y: auto;
+    padding-right: 5px;
+}
+
+.error-record-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.error-record-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 3px 5px rgba(0, 0, 0, 0.15);
+    background-color: #fffdfa;
+}
+
+.error-word {
+    color: #e05353;
+    font-weight: 600;
+    margin-right: 10px;
+}
+
+.error-translation {
+    color: #5a5a5a;
+    flex-grow: 1;
+}
+
+.error-count {
+    color: #888;
+    font-size: 0.9rem;
+    background-color: #f0f0f0;
+    padding: 2px 6px;
+    border-radius: 10px;
+}
+
+.empty-records-message {
+    color: #78a578;
+    text-align: center;
+    padding: 15px;
+    font-style: italic;
+}
+
+/* 自定义提示框样式 */
+.custom-alert-box {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.custom-alert-box.show {
+    opacity: 1;
+}
+
+.custom-alert-content {
+    background: linear-gradient(135deg, #ffffff 0%, #f0f4ff 100%);
+    border-radius: 20px;
+    padding: 25px;
+    min-width: 300px;
+    max-width: 80%;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    text-align: center;
+    transform: scale(0.9);
+    transition: transform 0.3s ease;
+    border: 2px solid rgba(107, 197, 118, 0.5);
+}
+
+.custom-alert-box.show .custom-alert-content {
+    transform: scale(1);
+}
+
+.custom-alert-message {
+    font-size: 1.2rem;
+    color: #333;
+    margin-bottom: 20px;
+    line-height: 1.4;
+}
+
+.custom-alert-button {
+    background: linear-gradient(135deg, #6bc576 0%, #8fdb9a 100%);
+    color: white;
+    border: none;
+    padding: 10px 35px;
+    border-radius: 50px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-weight: 500;
+}
+
+.custom-alert-button:hover {
+    background: linear-gradient(135deg, #5cb067 0%, #7ac685 100%);
+    box-shadow: 0 4px 8px rgba(107, 197, 118, 0.3);
+    transform: translateY(-2px);
+}
+
+/* 年级选择对话框样式 */
+.grade-selection-dialog .dialog-content {
+    width: 400px;
+    max-width: 90%;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    color: #555;
+    font-weight: 500;
+}
+
+.form-group select,
+.form-group input {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 1rem;
+}
+
+.dialog-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.dialog-footer button {
+    padding: 8px 20px;
+    border-radius: 50px;
+    border: none;
+    cursor: pointer;
+    font-size: 0.9rem;
+}
+
+#cancel-grade-selection {
+    background-color: #f0f0f0;
+    color: #555;
+}
+
+#confirm-grade-selection {
+    background: linear-gradient(135deg, #6bc576 0%, #8fdb9a 100%);
+    color: white;
+}
+
+/* 对话框基础样式 */
+.custom-dialog {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+}
+
+.dialog-content {
+    background: white;
+    border-radius: 20px;
+    padding: 25px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+.dialog-content h3 {
+    margin-top: 0;
+    color: #4040cc;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.dialog-body {
+    margin-bottom: 15px;
+} 
