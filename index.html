@@ -6,16 +6,87 @@
     <title>单词消消乐</title>
     <link rel="stylesheet" href="styles.css">
     <link href="https://fonts.googleapis.com/css2?family=Comic+Neue&display=swap" rel="stylesheet">
+    <style>
+        .auth-buttons {
+            display: flex;
+            gap: 10px;
+            margin-left: auto;
+        }
+        
+        .auth-button {
+            padding: 8px 15px;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+        
+        .login-button {
+            background-color: transparent;
+            border: 1px solid #4CAF50;
+            color: #4CAF50;
+        }
+        
+        .login-button:hover {
+            background-color: rgba(76, 175, 80, 0.1);
+        }
+        
+        .register-button {
+            background-color: #4CAF50;
+            color: white;
+        }
+        
+        .register-button:hover {
+            background-color: #45a049;
+        }
+        
+        .promo-box {
+            background-color: #f9f9f9;
+            border: 1px solid #e5e5e5;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        
+        .promo-title {
+            font-weight: bold;
+            font-size: 18px;
+            margin-bottom: 10px;
+            color: #333;
+        }
+        
+        .promo-text {
+            color: #666;
+            margin-bottom: 15px;
+        }
+        
+        .promo-button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+        
+        .promo-button:hover {
+            background-color: #45a049;
+        }
+        
+        /* 错误记录面板默认隐藏 */
+        #error-records-panel {
+            display: none;
+            margin-top: 20px;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
         <div class="menu-bar">
-            <div class="menu-options">
-                <label for="grade-select">年级：</label>
-                <select id="grade-select">
-                    <!-- 选项将由JavaScript动态生成 -->
-                </select>
-            </div>
             <div class="menu-options">
                 <label for="word-count">单词数量：</label>
                 <select id="word-count">
@@ -33,6 +104,10 @@
                     <option value="hard">困难</option>
                 </select>
             </div>
+            <div class="auth-buttons">
+                <button class="auth-button login-button" id="login-button">登录</button>
+                <button class="auth-button register-button" id="register-button">注册</button>
+            </div>
         </div>
         
         <header>
@@ -48,10 +123,7 @@
                 </div>
             </div>
             <div class="controls">
-                <button id="start-game">重新开始</button>
-                <input type="file" id="file-input" accept=".xlsx,.xls,.csv" style="display: none;">
-                <button id="import-file">导入Excel</button>
-                <button id="download-template">下载模板</button>
+                <button id="start-game">开始游戏</button>
             </div>
         </header>
         
@@ -72,12 +144,88 @@
         
         <div id="combo-effect" class="combo-effect"></div>
         <div id="flash-effect" class="flash-effect"></div>
+        
+        <!-- 错误记录面板 -->
+        <div id="error-records-panel" class="error-records-panel">
+            <h2>错误记录</h2>
+            <div id="error-records-list" class="error-records-list"></div>
+        </div>
+        
+        <div class="promo-box" id="promo-box">
+            <div class="promo-title">想要体验更多功能？</div>
+            <div class="promo-text">注册账号可以使用更多单词，自定义学习内容，导入自己的词汇表！</div>
+            <button class="promo-button" id="promo-register-button">立即注册</button>
+        </div>
     </div>
     
     <!-- 撒花效果容器 -->
     <div id="confetti-container"></div>
     
     <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+    <script>
+        // 检查用户是否已登录
+        document.addEventListener('DOMContentLoaded', function() {
+            const token = localStorage.getItem('token');
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            
+            if (token && user.id) {
+                // 已登录，重定向到仪表盘页面
+                window.location.href = 'dashboard.html';
+                return;
+            }
+            
+            // 未登录用户看到的默认界面
+            // 绑定按钮事件
+            document.getElementById('login-button').addEventListener('click', function() {
+                window.location.href = 'login.html';
+            });
+            
+            document.getElementById('register-button').addEventListener('click', function() {
+                window.location.href = 'register.html';
+            });
+            
+            document.getElementById('promo-register-button').addEventListener('click', function() {
+                window.location.href = 'register.html';
+            });
+            
+            // 加载默认单词
+            fetch('/api/words/default')
+                .then(response => response.json())
+                .then(words => {
+                    // 保存单词到全局变量供游戏使用
+                    window.defaultWordPairs = words;
+                })
+                .catch(error => {
+                    console.error('获取默认单词失败:', error);
+                    // 使用脚本中的默认单词作为备用
+                });
+            
+            // 开始游戏按钮点击事件
+            document.getElementById('start-game').addEventListener('click', function() {
+                const wordCount = document.getElementById('word-count').value;
+                const difficulty = document.getElementById('difficulty').value;
+                
+                // 检查是否已经加载了默认单词
+                if (window.defaultWordPairs && window.defaultWordPairs.length > 0) {
+                    // 调用游戏初始化函数
+                    if (typeof window.startGameWithWords === 'function') {
+                        // 限制使用的单词数量
+                        const limitedWords = window.defaultWordPairs.slice(0, Math.min(window.defaultWordPairs.length, 20));
+                        window.startGameWithWords(limitedWords, difficulty);
+                    } else {
+                        console.error('游戏初始化函数未定义');
+                    }
+                } else {
+                    // 如果API获取失败，使用script.js中的默认单词
+                    if (typeof window.startGame === 'function') {
+                        window.startGame();
+                    } else {
+                        console.error('游戏初始化函数未定义');
+                    }
+                }
+            });
+        });
+    </script>
     <script src="script.js"></script>
 </body>
 </html> 

@@ -238,6 +238,16 @@ h2 {
     animation: showIcon 1s forwards;
 }
 
+/* 结果图标的淡出动画 */
+@keyframes fadeOutIcon {
+    from { opacity: 1; }
+    to { opacity: 0; }
+}
+
+.result-icon.fade-out {
+    animation: fadeOutIcon 0.3s forwards;
+}
+
 /* 模态框样式 */
 .modal {
     display: none;
@@ -344,11 +354,6 @@ textarea {
 }
 
 /* 动画定义 */
-@keyframes fadeOut {
-    0% { opacity: 1; }
-    100% { opacity: 0; visibility: hidden; }
-}
-
 @keyframes shake {
     0%, 100% { transform: translateX(0); }
     10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
@@ -391,6 +396,11 @@ textarea {
     100% {
         opacity: 1;
     }
+}
+
+@keyframes fadeOut {
+    0% { opacity: 1; }
+    100% { opacity: 0; visibility: hidden; }
 }
 
 @keyframes fadeOutLine {

@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>注册 - 单词消消乐</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Comic+Neue&display=swap" rel="stylesheet">
+    <style>
+        .register-container {
+            max-width: 500px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .register-form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        
+        .form-group label {
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .form-group input, .form-group select {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        
+        .register-btn {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        .register-btn:hover {
+            background-color: #45a049;
+        }
+        
+        .login-link {
+            text-align: center;
+            margin-top: 20px;
+        }
+        
+        .login-link a {
+            color: #4CAF50;
+            text-decoration: none;
+        }
+        
+        .login-link a:hover {
+            text-decoration: underline;
+        }
+        
+        .error-message {
+            color: #f44336;
+            font-size: 14px;
+            margin-top: 5px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header style="margin-bottom: 0;">
+            <h1>单词消消乐 - 用户注册</h1>
+        </header>
+        
+        <div class="register-container">
+            <div id="register-error" class="error-message" style="text-align: center; margin-bottom: 15px;"></div>
+            
+            <form id="register-form" class="register-form">
+                <div class="form-group">
+                    <label for="nickname">昵称</label>
+                    <input type="text" id="nickname" name="nickname" required placeholder="请输入你的昵称">
+                    <div id="nickname-error" class="error-message"></div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="grade">年级</label>
+                    <select id="grade" name="grade" required>
+                        <option value="">请选择年级</option>
+                        <option value="grade1">小学一年级</option>
+                        <option value="grade2">小学二年级</option>
+                        <option value="grade3">小学三年级</option>
+                        <option value="grade4">小学四年级</option>
+                        <option value="grade5">小学五年级</option>
+                        <option value="grade6">小学六年级</option>
+                        <option value="junior1">初中一年级</option>
+                        <option value="junior2">初中二年级</option>
+                        <option value="junior3">初中三年级</option>
+                    </select>
+                    <div id="grade-error" class="error-message"></div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="textbook_type">教材版本</label>
+                    <select id="textbook_type" name="textbook_type" required>
+                        <option value="">请选择教材版本</option>
+                        <option value="人教版" selected>人教版</option>
+                        <option value="外研版">外研版</option>
+                        <option value="其他">其他</option>
+                    </select>
+                    <div id="textbook_type-error" class="error-message"></div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="phone">手机号</label>
+                    <input type="tel" id="phone" name="phone" required placeholder="请输入11位手机号码" pattern="[0-9]{11}">
+                    <div id="phone-error" class="error-message"></div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">密码</label>
+                    <input type="password" id="password" name="password" required placeholder="请设置密码，至少6位">
+                    <div id="password-error" class="error-message"></div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="confirm-password">确认密码</label>
+                    <input type="password" id="confirm-password" name="confirmPassword" required placeholder="请再次输入密码">
+                    <div id="confirm-password-error" class="error-message"></div>
+                </div>
+                
+                <button type="submit" class="register-btn">注册</button>
+            </form>
+            
+            <div class="login-link">
+                已有账号？<a href="login.html">立即登录</a>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const registerForm = document.getElementById('register-form');
+            const registerError = document.getElementById('register-error');
+            
+            registerForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                // 重置错误信息
+                registerError.style.display = 'none';
+                document.querySelectorAll('.error-message').forEach(el => el.style.display = 'none');
+                
+                // 获取表单数据
+                const nickname = document.getElementById('nickname').value.trim();
+                const grade = document.getElementById('grade').value;
+                const textbook_type = document.getElementById('textbook_type').value;
+                const phone = document.getElementById('phone').value.trim();
+                const password = document.getElementById('password').value;
+                const confirmPassword = document.getElementById('confirm-password').value;
+                
+                // 验证表单
+                let isValid = true;
+                
+                if (!nickname) {
+                    showError('nickname-error', '请输入昵称');
+                    isValid = false;
+                }
+                
+                if (!grade) {
+                    showError('grade-error', '请选择年级');
+                    isValid = false;
+                }
+                
+                if (!textbook_type) {
+                    showError('textbook_type-error', '请选择教材版本');
+                    isValid = false;
+                }
+                
+                if (!phone) {
+                    showError('phone-error', '请输入手机号');
+                    isValid = false;
+                } else if (!/^1[3-9]\d{9}$/.test(phone)) {
+                    showError('phone-error', '请输入有效的11位手机号');
+                    isValid = false;
+                }
+                
+                if (!password) {
+                    showError('password-error', '请设置密码');
+                    isValid = false;
+                } else if (password.length < 6) {
+                    showError('password-error', '密码长度至少为6位');
+                    isValid = false;
+                }
+                
+                if (password !== confirmPassword) {
+                    showError('confirm-password-error', '两次输入的密码不一致');
+                    isValid = false;
+                }
+                
+                if (!isValid) return;
+                
+                // 显示加载状态
+                const registerBtn = document.querySelector('.register-btn');
+                registerBtn.disabled = true;
+                registerBtn.textContent = '注册中...';
+                
+                // 提交注册请求
+                try {
+                    const response = await fetch('/api/users/register', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            nickname,
+                            grade,
+                            textbook_type,
+                            phone,
+                            password
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (!response.ok) {
+                        if (data.error && data.error.includes('已注册')) {
+                            showError('phone-error', '该手机号已被注册');
+                        } else {
+                            showError('register-error', data.error || '注册失败，请稍后再试');
+                        }
+                        return;
+                    }
+                    
+                    // 注册成功，保存token到localStorage
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                    localStorage.setItem('token', data.token);
+                    
+                    // 跳转到主页
+                    window.location.href = 'dashboard.html';
+                } catch (error) {
+                    console.error('注册请求错误:', error);
+                    showError('register-error', '注册失败，请检查网络连接');
+                } finally {
+                    // 恢复按钮状态
+                    registerBtn.disabled = false;
+                    registerBtn.textContent = '注册';
+                }
+            });
+            
+            function showError(elementId, message) {
+                const errorElement = document.getElementById(elementId);
+                errorElement.textContent = message;
+                errorElement.style.display = 'block';
+            }
+        });
+    </script>
+</body>
+</html> 

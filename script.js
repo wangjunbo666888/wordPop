@@ -30,6 +30,7 @@ const gameData = {
     gameActive: false, // 游戏是否进行中
     timer: null, // 计时器引用
     timeLeft: 60, // 倒计时秒数
+    initialTime: 60, // 初始时间，用于计算用时
     score: 0, // 当前得分
     comboCount: 0, // 连击次数
     wordClickCount: {}, // 单词点击次数记录，用于双击TTS
@@ -107,6 +108,87 @@ const elements = {
 };
 
 /**
+ * 初始化所有事件监听器
+ */
+function initEventListeners() {
+    // 游戏控制按钮事件
+    if (elements.startButton) {
+        elements.startButton.addEventListener('click', startGame);
+    }
+    
+    if (elements.importFileButton) {
+        // 确保只绑定一次事件，先移除可能存在的事件监听器
+        elements.importFileButton.removeEventListener('click', function() {
+            elements.fileInput.click();
+        });
+        
+        // 使用命名函数以便于移除
+        elements.importFileButton.importFileHandler = function() {
+            // 防止重复点击导致多次触发
+            if (elements.importFileButton.dataset.processing === 'true') {
+                return;
+            }
+            elements.importFileButton.dataset.processing = 'true';
+            
+            // 延迟一点时间再清除标记，防止快速点击
+            setTimeout(() => {
+                elements.importFileButton.dataset.processing = 'false';
+            }, 1000);
+            
+            elements.fileInput.click();
+        };
+        
+        // 重新绑定事件
+        elements.importFileButton.addEventListener('click', elements.importFileButton.importFileHandler);
+    }
+    
+    if (elements.fileInput) {
+        elements.fileInput.removeEventListener('change', handleFileImport);
+        elements.fileInput.addEventListener('change', handleFileImport);
+    }
+    
+    if (elements.downloadTemplateButton) {
+        // 先移除可能存在的事件处理程序
+        elements.downloadTemplateButton.removeEventListener('click', downloadImportTemplate);
+        
+        // 使用命名函数以便于移除
+        elements.downloadTemplateButton.templateHandler = function() {
+            // 防止重复点击导致多次触发
+            if (elements.downloadTemplateButton.dataset.processing === 'true') {
+                return;
+            }
+            elements.downloadTemplateButton.dataset.processing = 'true';
+            
+            // 下载模板
+            downloadImportTemplate();
+            
+            // 延迟一点时间再清除标记，防止快速点击
+            setTimeout(() => {
+                elements.downloadTemplateButton.dataset.processing = 'false';
+            }, 1000);
+        };
+        
+        // 重新绑定事件
+        elements.downloadTemplateButton.addEventListener('click', elements.downloadTemplateButton.templateHandler);
+    }
+    
+    // 添加单词卡片和释义卡片的点击事件，在游戏启动时会重新绑定
+    addEventListeners();
+    
+    // 处理单词朗读
+    document.addEventListener('click', handleWordTTS);
+    
+    // 难度和单词数量变更
+    if (elements.wordCountSelect) {
+        elements.wordCountSelect.addEventListener('change', handleWordCountChange);
+    }
+    
+    if (elements.difficultySelect) {
+        elements.difficultySelect.addEventListener('change', handleDifficultyChange);
+    }
+}
+
+/**
  * 初始化游戏
  */
 function initGame() {
@@ -127,8 +209,8 @@ function initGame() {
     // 预加载音效
     preloadAudio();
     
-    // 初始化错误记录面板
-    initErrorPanel();
+    // 初始化错误记录面板引用
+    updateErrorRecordsPanelReferences();
 }
 
 /**
@@ -144,6 +226,15 @@ function preloadAudio() {
     Object.values(audioResources).forEach(audio => {
         audio.load();
     });
+}
+
+/**
+ * 更新错误记录面板DOM引用
+ */
+function updateErrorRecordsPanelReferences() {
+    // 更新错误记录面板的DOM引用
+    elements.errorRecordsPanel = document.getElementById('error-records-panel');
+    elements.errorRecordsList = document.getElementById('error-records-list');
 }
 
 /**
@@ -170,9 +261,14 @@ function resetGameState() {
         elements.confettiContainer.innerHTML = '';
     }
     
-    // 清空错误记录面板
+    // 清空并隐藏错误记录面板
     if (elements.errorRecordsList) {
         elements.errorRecordsList.innerHTML = '';
+    }
+    
+    // 隐藏错误记录面板
+    if (elements.errorRecordsPanel) {
+        elements.errorRecordsPanel.style.display = 'none';
     }
 }
 
@@ -236,25 +332,14 @@ function createCards() {
  * 添加事件监听器
  */
 function addEventListeners() {
-    // 开始游戏按钮
-    elements.startButton.addEventListener('click', startGame);
+    // 开始游戏按钮 - 使用命名函数以便于精确移除
+    elements.startButton.gameStartHandler = elements.startButton.gameStartHandler || startGame;
+    elements.startButton.removeEventListener('click', elements.startButton.gameStartHandler);
+    elements.startButton.addEventListener('click', elements.startButton.gameStartHandler);
     
     // 单词卡片点击
+    elements.wordsContainer.removeEventListener('click', handleWordCardClick);
     elements.wordsContainer.addEventListener('click', handleWordCardClick);
-    
-    // 释义卡片点击
-    elements.translationsContainer.addEventListener('click', handleTranslationCardClick);
-    
-    // 导入文件按钮
-    elements.importFileButton.addEventListener('click', () => {
-        elements.fileInput.click();
-    });
-    
-    // 文件输入变化
-    elements.fileInput.addEventListener('change', handleFileImport);
-    
-    // 下载模板按钮
-    elements.downloadTemplateButton.addEventListener('click', downloadImportTemplate);
     
     // 单词卡片双击（TTS朗读）
     elements.wordsContainer.addEventListener('dblclick', handleWordTTS);
@@ -299,12 +384,15 @@ function handleDifficultyChange() {
     switch (newDifficulty) {
         case 'easy':
             gameData.timeLeft = 90; // 简单模式给更多时间
+            gameData.initialTime = 90; // 记录初始时间
             break;
         case 'medium':
             gameData.timeLeft = 60; // 中等难度
+            gameData.initialTime = 60; // 记录初始时间
             break;
         case 'hard':
             gameData.timeLeft = 45; // 困难模式时间更短
+            gameData.initialTime = 45; // 记录初始时间
             break;
     }
     
@@ -354,6 +442,11 @@ function endGame() {
     
     // 显示结束提示
     showCustomAlert(`游戏结束！您的最终得分是：${gameData.score}`, 3000);
+    
+    // 调用游戏结束处理函数（如果存在）
+    if (typeof window.gameEndHandler === 'function') {
+        window.gameEndHandler();
+    }
 }
 
 /**
@@ -372,6 +465,9 @@ function handleWordCardClick(e) {
     
     // 如果该卡片已匹配，不执行操作
     if (card.classList.contains('matched')) return;
+    
+    // 清除之前所有结果图标
+    clearAllResultIcons();
     
     // 取消选中之前的单词卡片
     const prevSelectedWord = document.querySelector('.word-card.selected');
@@ -407,6 +503,9 @@ function handleTranslationCardClick(e) {
     // 如果该卡片已匹配，不执行操作
     if (card.classList.contains('matched')) return;
     
+    // 清除之前所有结果图标
+    clearAllResultIcons();
+    
     // 取消选中之前的释义卡片
     const prevSelectedTranslation = document.querySelector('.translation-card.selected');
     if (prevSelectedTranslation) {
@@ -421,6 +520,25 @@ function handleTranslationCardClick(e) {
     if (gameData.selectedWord) {
         checkMatch();
     }
+}
+
+/**
+ * 清除所有卡片上的错误结果图标
+ */
+function clearAllResultIcons() {
+    // 只清除错误匹配的图标（X号），保留正确匹配的图标（✓号）
+    const incorrectIcons = document.querySelectorAll('.result-icon.incorrect');
+    incorrectIcons.forEach(icon => {
+        // 添加淡出动画
+        icon.classList.add('fade-out');
+        
+        // 动画结束后移除元素
+        setTimeout(() => {
+            if (icon.parentNode) {
+                icon.parentNode.removeChild(icon);
+            }
+        }, 300);
+    });
 }
 
 /**
@@ -617,6 +735,9 @@ function showResultIcon(card, isCorrect) {
     icon.textContent = isCorrect ? '✓' : '✗';
     
     card.appendChild(icon);
+    
+    // 对于正确匹配的卡片，图标会保留到卡片消失
+    // 对于错误匹配的卡片，图标会在下一次选择时淡出消失
 }
 
 /**
@@ -655,9 +776,12 @@ function checkAllMatched() {
         // 显示撒花特效
         showConfetti();
         
+        // 计算用时（使用初始时间减去剩余时间）
+        const timeUsed = gameData.initialTime - gameData.timeLeft;
+        
         // 显示胜利提示
         setTimeout(() => {
-            showCustomAlert(`恭喜你赢了！用时${60 - gameData.timeLeft}秒，得分${gameData.score}`, 3000);
+            showCustomAlert(`恭喜你赢了！用时${timeUsed}秒，得分${gameData.score}`, 3000);
         }, 1000);
     }
 }
@@ -693,12 +817,24 @@ function showConfetti() {
 }
 
 /**
- * 处理文件导入
+ * 处理Excel文件导入
  * @param {Event} e - 文件输入事件
  */
 function handleFileImport(e) {
+    // 防止重复处理
+    if (e.target.dataset.processing === 'true') {
+        console.log('[Excel导入] 文件已在处理中，忽略重复事件');
+        return;
+    }
+    
+    // 标记正在处理
+    e.target.dataset.processing = 'true';
+    
     const file = e.target.files[0];
-    if (!file) return;
+    if (!file) {
+        e.target.dataset.processing = 'false';
+        return;
+    }
     
     console.log(`[Excel导入] 开始导入文件: ${file.name}, 大小: ${(file.size/1024).toFixed(2)}KB`);
     
@@ -816,6 +952,7 @@ function handleFileImport(e) {
         } catch (error) {
             console.error('[Excel导入] 解析错误:', error);
             showCustomAlert('导入失败，Excel文件解析错误。', 3000);
+            e.target.dataset.processing = 'false'; // 重置处理状态
         }
     };
     
@@ -823,31 +960,51 @@ function handleFileImport(e) {
     reader.onerror = function(error) {
         console.error('[Excel导入] 文件读取错误:', error);
         showCustomAlert('导入失败，文件读取错误。', 3000);
+        e.target.dataset.processing = 'false'; // 重置处理状态
     };
     
     reader.readAsArrayBuffer(file);
     
     // 重置文件输入
     e.target.value = '';
+    
+    // 添加全局错误处理，确保处理状态被重置
+    setTimeout(() => {
+        e.target.dataset.processing = 'false';
+        console.log('[Excel导入] 重置处理状态');
+    }, 2000); // 设置一个合理的超时时间，确保其他异步操作完成
 }
 
 /**
  * 下载导入模板
  */
 function downloadImportTemplate() {
-    // 创建下载链接
-    const link = document.createElement('a');
-    link.href = 'importTemplate.xlsx';
-    link.download = 'importTemplate.xlsx';
+    console.log('[模板下载] 开始生成模板文件');
     
-    // 添加到文档，触发点击，然后移除
-    document.body.appendChild(link);
-    link.click();
-    
-    // 延时移除链接
-    setTimeout(() => {
-        document.body.removeChild(link);
-    }, 100);
+    try {
+        // 创建一个简单的Excel模板
+        const template = [
+            { word: 'apple', translation: '苹果', unit: '1' },
+            { word: 'banana', translation: '香蕉', unit: '1' }
+        ];
+        
+        // 使用XLSX.js创建Excel工作表
+        const worksheet = XLSX.utils.json_to_sheet(template);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "单词模板");
+        
+        // 生成带时间戳的文件名，确保每次下载的文件名不同
+        const timestamp = new Date().getTime();
+        const fileName = `单词导入模板_${timestamp}.xlsx`;
+        
+        // 使用XLSX.js生成并下载文件
+        XLSX.writeFile(workbook, fileName);
+        
+        console.log('[模板下载] 模板文件生成完成:', fileName);
+    } catch (error) {
+        console.error('[模板下载] 生成模板文件失败:', error);
+        showCustomAlert('下载模板失败，请稍后重试。', 3000);
+    }
 }
 
 /**
@@ -904,7 +1061,17 @@ function handleWordClick(e) {
     // 仅在真实用户点击时朗读单词（isTrusted标识用户触发的事件）
     if (e.isTrusted) {
         const word = card.dataset.word;
-        speakWord(word);
+        
+        // 初始化单词点击计数
+        if (!gameData.wordClickCount[word]) {
+            gameData.wordClickCount[word] = 0;
+        }
+        
+        // 只朗读2遍
+        if (gameData.wordClickCount[word] < 2) {
+            speakWord(word);
+            gameData.wordClickCount[word]++;
+        }
     }
 }
 
@@ -913,7 +1080,10 @@ function handleWordClick(e) {
  */
 function updateErrorRecordsPanel() {
     // 确保错误记录面板存在
-    if (!elements.errorRecordsList) return;
+    if (!elements.errorRecordsList || !elements.errorRecordsPanel) {
+        updateErrorRecordsPanelReferences();
+        if (!elements.errorRecordsList || !elements.errorRecordsPanel) return;
+    }
     
     // 清空当前内容
     elements.errorRecordsList.innerHTML = '';
@@ -921,101 +1091,39 @@ function updateErrorRecordsPanel() {
     // 按错误次数排序
     const sortedRecords = [...gameData.errorRecords].sort((a, b) => b.count - a.count);
     
-    // 显示错误记录
-    sortedRecords.forEach(record => {
-        const recordItem = document.createElement('div');
-        recordItem.className = 'error-record-item';
-        recordItem.innerHTML = `
-            <span class="error-word">${record.word}</span>
-            <span class="error-translation">${record.translation}</span>
-            <span class="error-count">${record.count}次</span>
-        `;
+    // 如果有错误记录，显示面板
+    if (sortedRecords.length > 0) {
+        elements.errorRecordsPanel.style.display = 'block';
         
-        // 添加点击朗读功能
-        recordItem.addEventListener('click', () => {
-            speakWord(record.word);
+        // 显示错误记录
+        sortedRecords.forEach(record => {
+            const recordItem = document.createElement('div');
+            recordItem.className = 'error-record-item';
+            recordItem.innerHTML = `
+                <span class="error-word">${record.word}</span>
+                <span class="error-translation">${record.translation}</span>
+                <span class="error-count">${record.count}次</span>
+            `;
+            
+            // 添加点击朗读功能
+            recordItem.addEventListener('click', () => {
+                speakWord(record.word);
+            });
+            
+            elements.errorRecordsList.appendChild(recordItem);
         });
-        
-        elements.errorRecordsList.appendChild(recordItem);
-    });
-    
-    // 如果没有错误记录，显示提示信息
-    if (sortedRecords.length === 0) {
-        const emptyMessage = document.createElement('div');
-        emptyMessage.className = 'empty-records-message';
-        emptyMessage.textContent = '太棒了！目前没有错误记录';
-        elements.errorRecordsList.appendChild(emptyMessage);
+    } else {
+        // 如果没有错误记录，隐藏面板
+        elements.errorRecordsPanel.style.display = 'none';
     }
-}
-
-/**
- * 初始化错误记录面板
- */
-function initErrorPanel() {
-    // 检查容器是否已存在
-    let errorPanel = document.getElementById('error-records-panel');
-    
-    if (!errorPanel) {
-        // 创建错误记录面板容器
-        errorPanel = document.createElement('div');
-        errorPanel.id = 'error-records-panel';
-        errorPanel.className = 'error-records-panel';
-        
-        // 创建面板标题
-        const panelTitle = document.createElement('h2');
-        panelTitle.textContent = '错误记录';
-        errorPanel.appendChild(panelTitle);
-        
-        // 创建记录列表
-        const recordsList = document.createElement('div');
-        recordsList.id = 'error-records-list';
-        recordsList.className = 'error-records-list';
-        errorPanel.appendChild(recordsList);
-        
-        // 添加到页面
-        document.querySelector('.container').appendChild(errorPanel);
-        
-        // 更新DOM引用
-        elements.errorRecordsPanel = errorPanel;
-        elements.errorRecordsList = recordsList;
-    }
-    
-    // 初始化显示空记录
-    updateErrorRecordsPanel();
 }
 
 // DOM 加载完成后执行
 document.addEventListener('DOMContentLoaded', function() {
-    // 从数据库加载年级数据
-    loadGradesFromDB()
-        .then(grades => {
-            if (grades && grades.length > 0) {
-                populateGradeSelector(grades);
-                // 尝试加载上次选择的年级
-                const lastSelectedGrade = localStorage.getItem(STORAGE_KEYS.LAST_SELECTED_GRADE);
-                if (lastSelectedGrade) {
-                    elements.gradeSelect.value = lastSelectedGrade;
-                    loadWordsForGrade(lastSelectedGrade);
-                } else {
-                    // 加载第一个年级的单词
-                    loadWordsForGrade(grades[0].id);
-                }
-                // 移除首页加载提示
-                console.log(`成功加载了${grades.length}个年级数据`);
-            } else {
-                // 如果没有年级数据，使用默认词库
-                gameData.wordPairs = [...defaultWordPairs];
-                console.log('未找到年级数据，使用默认词库');
-                initGame();
-            }
-        })
-        .catch(error => {
-            console.error('数据库连接错误:', error);
-            // 出错时使用默认词库
-            gameData.wordPairs = [...defaultWordPairs];
-            console.log('数据库连接失败，使用默认词库');
-            initGame();
-        });
+    // 初始化游戏
+    gameData.wordPairs = [...defaultWordPairs];
+    console.log('使用默认词库初始化游戏');
+    initGame();
     
     // 初始化事件监听器
     initEventListeners();
@@ -1088,217 +1196,6 @@ function showCustomAlert(message, duration, callback) {
 }
 
 /**
- * 从数据库加载年级列表
- * @param {boolean} [asMap=false] 是否返回名称到ID的映射对象
- * @returns {Promise<Array|Object>} 年级列表或名称到ID的映射
- */
-function loadGradesFromDB(asMap = false) {
-    return new Promise((resolve, reject) => {
-        // 使用fetch调用后端API获取年级数据
-        fetch('/api/grades')
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('网络响应不正常');
-                }
-                return response.json();
-            })
-            .then(data => {
-                if (asMap) {
-                    // 返回名称到ID的映射
-                    const nameToIdMap = {};
-                    data.forEach(grade => {
-                        nameToIdMap[grade.name] = grade.id;
-                    });
-                    resolve(nameToIdMap);
-                } else {
-                    // 返回原始数组
-                    resolve(data);
-                }
-            })
-            .catch(error => {
-                console.error('获取年级数据失败:', error);
-                reject(error);
-            });
-    });
-}
-
-/**
- * 根据年级ID从数据库加载单词
- * @param {string} gradeId 年级ID
- * @returns {Promise<Array>} 单词列表
- */
-function loadWordsForGrade(gradeId) {
-    console.log(`[单词加载] 开始加载年级ID: ${gradeId}的单词列表`);
-    
-    return new Promise((resolve, reject) => {
-        // 记录当前选择的年级ID
-        gameData.currentGradeId = gradeId;
-        // 保存到本地存储
-        localStorage.setItem(STORAGE_KEYS.LAST_SELECTED_GRADE, gradeId);
-        
-        // 使用fetch调用后端API获取该年级的单词
-        fetch(`/api/words?gradeId=${gradeId}`)
-            .then(response => {
-                if (!response.ok) {
-                    console.error(`[单词加载] HTTP错误: ${response.status} ${response.statusText}`);
-                    throw new Error('网络响应不正常');
-                }
-                return response.json();
-            })
-            .then(data => {
-                console.log(`[单词加载] 成功加载年级ID: ${gradeId}的单词，共${data.length}个`);
-                gameData.wordPairs = data;
-                // 初始化游戏
-                initGame();
-                resolve(data);
-            })
-            .catch(error => {
-                console.error(`[单词加载] 加载年级ID: ${gradeId}的单词失败:`, error);
-                reject(error);
-            });
-    });
-}
-
-/**
- * 填充年级选择器
- * @param {Array} grades 年级列表
- */
-function populateGradeSelector(grades) {
-    // 清空现有选项
-    elements.gradeSelect.innerHTML = '';
-    
-    // 添加年级选项
-    grades.forEach(grade => {
-        const option = document.createElement('option');
-        option.value = grade.id;
-        option.textContent = grade.name;
-        elements.gradeSelect.appendChild(option);
-    });
-    
-    // 添加年级变更监听器
-    elements.gradeSelect.addEventListener('change', () => {
-        const selectedGradeId = elements.gradeSelect.value;
-        loadWordsForGrade(selectedGradeId);
-    });
-}
-
-/**
- * 将单词保存到数据库
- * @param {Array} wordPairs 单词对数组
- * @param {string} gradeId 年级ID
- * @returns {Promise<boolean>} 是否保存成功
- */
-function saveWordsToDB(wordPairs, gradeId) {
-    console.log(`[数据存储] 开始存储${wordPairs.length}个单词到年级ID: ${gradeId}`);
-    console.log('[数据存储] 单词数据示例:', JSON.stringify(wordPairs.slice(0, 3)));
-    
-    return new Promise((resolve, reject) => {
-        // 检查单词数据的有效性
-        if (!Array.isArray(wordPairs) || wordPairs.length === 0) {
-            console.error('[数据存储] 单词数据无效:', wordPairs);
-            reject(new Error('单词数据无效'));
-            return;
-        }
-        
-        // 确保单词对象格式正确
-        const validWordPairs = wordPairs.filter(pair => 
-            pair && typeof pair === 'object' && pair.word && pair.translation);
-            
-        if (validWordPairs.length === 0) {
-            console.error('[数据存储] 没有有效的单词数据');
-            reject(new Error('没有有效的单词数据'));
-            return;
-        }
-        
-        if (validWordPairs.length < wordPairs.length) {
-            console.warn(`[数据存储] 过滤掉了 ${wordPairs.length - validWordPairs.length} 个无效单词`);
-        }
-        
-        // 构建请求数据
-        const requestData = {
-            gradeId: gradeId,
-            words: validWordPairs
-        };
-        
-        console.log(`[数据存储] 准备发送请求，单词数量: ${validWordPairs.length}`);
-        
-        // 发送请求到后端API
-        fetch('/api/words', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(requestData)
-        })
-        .then(response => {
-            console.log(`[数据存储] 收到响应状态: ${response.status} ${response.statusText}`);
-            
-            if (!response.ok) {
-                console.error(`[数据存储] HTTP错误: ${response.status} ${response.statusText}`);
-                // 读取错误详情
-                return response.json().then(errorData => {
-                    console.error('[数据存储] 错误详情:', errorData);
-                    throw new Error(errorData.error || '保存失败');
-                });
-            }
-            return response.json();
-        })
-        .then(data => {
-            console.log(`[数据存储] 成功保存${validWordPairs.length}个单词到年级ID: ${gradeId}`, data);
-            resolve(true);
-        })
-        .catch(error => {
-            console.error('[数据存储] 保存失败:', error);
-            reject(error);
-        });
-    });
-}
-
-/**
- * 添加新的年级到数据库
- * @param {string} gradeName 年级名称
- * @returns {Promise<string>} 返回新创建的年级ID
- */
-function addGradeToDB(gradeName) {
-    console.log(`[年级添加] 开始添加新年级: "${gradeName}"`);
-    
-    return new Promise((resolve, reject) => {
-        // 生成随机ID
-        const id = generateRandomId();
-        
-        // 构建请求数据
-        const requestData = {
-            id: id,
-            name: gradeName
-        };
-        
-        // 发送请求到后端API
-        fetch('/api/grades', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(requestData)
-        })
-        .then(response => {
-            if (!response.ok) {
-                console.error(`[年级添加] HTTP错误: ${response.status} ${response.statusText}`);
-                throw new Error('添加年级失败');
-            }
-            return response.json();
-        })
-        .then(data => {
-            console.log(`[年级添加] 成功添加年级: "${gradeName}", ID: ${id}`);
-            resolve(id);
-        })
-        .catch(error => {
-            console.error(`[年级添加] 添加年级"${gradeName}"失败:`, error);
-            reject(error);
-        });
-    });
-}
-
-/**
  * 生成随机8位字符串ID
  * @returns {string} 8位随机ID
  */
@@ -1362,64 +1259,8 @@ function handleImportComplete(wordPairs, skippedCount = 0) {
     
     console.log(`[导入处理] 共有${grades.length}个不同年级的单词需要保存`);
     
-    // 加载现有年级信息，使用名称到ID的映射
-    loadGradesFromDB(true)
-        .then(gradeNameToId => {
-            console.log('[导入处理] 已加载现有年级信息');
-            
-            // 处理每个年级的单词
-            const savePromises = grades.map(gradeName => {
-                const wordsForGrade = wordsByGrade[gradeName];
-                
-                // 检查年级是否已存在
-                if (gradeNameToId[gradeName]) {
-                    // 使用现有年级ID
-                    const gradeId = gradeNameToId[gradeName];
-                    console.log(`[导入处理] 使用现有年级 "${gradeName}" (ID: ${gradeId}) 保存${wordsForGrade.length}个单词`);
-                    
-                    return saveWordsToDB(wordsForGrade, gradeId)
-                        .then(() => {
-                            return { gradeName, gradeId, count: wordsForGrade.length, isNew: false };
-                        });
-                } else {
-                    // 创建新年级
-                    console.log(`[导入处理] 创建新年级 "${gradeName}" 并保存${wordsForGrade.length}个单词`);
-                    
-                    return addGradeToDB(gradeName)
-                        .then(gradeId => {
-                            return saveWordsToDB(wordsForGrade, gradeId)
-                                .then(() => {
-                                    return { gradeName, gradeId, count: wordsForGrade.length, isNew: true };
-                                });
-                        });
-                }
-            });
-            
-            // 等待所有保存操作完成
-            return Promise.all(savePromises);
-        })
-        .then(results => {
-            console.log('[导入处理] 所有单词保存完成:', results);
-            
-            // 刷新年级选择器
-            return loadGradesFromDB()
-                .then(grades => {
-                    populateGradeSelector(grades);
-                    
-                    // 显示成功信息
-                    showCustomAlert(`数据导入成功`, 3000);
-                    
-                    // 如果有新年级被创建并且用户没有选择年级，选择第一个新创建的年级
-                    const newGrades = results.filter(r => r.isNew);
-                    if (newGrades.length > 0 && (!gameData.currentGradeId || gameData.currentGradeId === 'unknown')) {
-                        loadWordsForGrade(newGrades[0].gradeId);
-                    }
-                });
-        })
-        .catch(error => {
-            console.error('[导入处理] 保存单词失败:', error);
-            showCustomAlert('导入失败，保存单词时出错。', 3000);
-        });
+    console.log('[导入处理] 现在使用单词本系统，不再需要年级处理');
+    showCustomAlert('请使用单词本功能管理单词', 3000);
 }
 
 // 使用saveToLocalStorage仍保留但不再是主要存储方式
@@ -1434,132 +1275,116 @@ function loadFromLocalStorage() {
 }
 
 /**
- * 显示年级选择对话框（此函数保留但不再用于Excel导入）
- * @param {Array} wordPairs 单词对数组
+ * 使用指定单词列表初始化游戏
+ * @param {Array} wordPairs 单词和翻译对
+ * @param {string} difficulty 游戏难度
  */
-function showGradeSelectionDialog(wordPairs) {
-    console.log('[年级选择] 显示年级选择对话框');
+function startGameWithWords(wordPairs, difficulty) {
+    // 设置游戏难度
+    gameData.difficulty = difficulty || 'medium';
+    document.getElementById('difficulty').value = gameData.difficulty;
     
-    // 创建对话框容器
-    const dialog = document.createElement('div');
-    dialog.className = 'modal-overlay';
-    dialog.innerHTML = `
-        <div class="modal-content">
-            <h3>保存单词</h3>
-            <p>请选择要将这些单词保存到哪个年级，或创建新年级：</p>
-            <select id="save-grade-select" class="form-select">
-                <option value="new">-- 创建新年级 --</option>
-            </select>
-            <div id="new-grade-input" style="display:none; margin-top:10px;">
-                <input type="text" id="new-grade-name" placeholder="输入新年级名称" class="form-input">
-            </div>
-            <div class="button-group">
-                <button id="cancel-save" class="btn">取消</button>
-                <button id="confirm-save" class="btn btn-primary">保存</button>
-            </div>
-        </div>
-    `;
+    // 保存单词对
+    gameData.wordPairs = [...wordPairs];
     
-    document.body.appendChild(dialog);
+    // 根据当前选择获取单词数量
+    const wordCountSelect = document.getElementById('word-count');
+    if (wordCountSelect) {
+        gameData.wordCount = parseInt(wordCountSelect.value) || 10;
+    }
     
-    // 获取年级列表填充到选择器中
-    const saveGradeSelect = document.getElementById('save-grade-select');
+    // 重置游戏状态
+    resetGameState();
     
-    // 加载年级列表
-    loadGradesFromDB()
-        .then(grades => {
-            console.log(`[年级选择] 加载了${grades.length}个现有年级`);
-            grades.forEach(grade => {
-                const option = document.createElement('option');
-                option.value = grade.id;
-                option.textContent = grade.name;
-                saveGradeSelect.appendChild(option);
-            });
-        })
-        .catch(error => {
-            console.error('[年级选择] 加载年级列表失败:', error);
-        });
+    // 清空容器
+    elements.wordsContainer.innerHTML = '';
+    elements.translationsContainer.innerHTML = '';
     
-    // 处理选择变化
-    saveGradeSelect.addEventListener('change', () => {
-        const newGradeInput = document.getElementById('new-grade-input');
-        if (saveGradeSelect.value === 'new') {
-            newGradeInput.style.display = 'block';
-        } else {
-            newGradeInput.style.display = 'none';
-        }
-    });
+    // 创建卡片
+    createCards();
     
-    // 处理取消按钮
-    document.getElementById('cancel-save').addEventListener('click', () => {
-        console.log('[年级选择] 用户取消保存');
-        document.body.removeChild(dialog);
-    });
-    
-    // 处理确认保存按钮
-    document.getElementById('confirm-save').addEventListener('click', () => {
-        const selectedValue = saveGradeSelect.value;
-        
-        if (selectedValue === 'new') {
-            // 创建新年级
-            const newGradeName = document.getElementById('new-grade-name').value.trim();
-            if (!newGradeName) {
-                console.warn('[年级选择] 新年级名称为空');
-                showCustomAlert('请输入年级名称！', 2000);
-                return;
-            }
-            
-            console.log(`[年级选择] 创建新年级: "${newGradeName}"`);
-            
-            // 添加新年级并保存单词
-            addGradeToDB(newGradeName)
-                .then(gradeId => {
-                    console.log(`[年级选择] 新年级创建成功，ID: ${gradeId}`);
-                    return saveWordsToDB(wordPairs, gradeId);
-                })
-                .then(() => {
-                    // 重新加载年级列表
-                    return loadGradesFromDB();
-                })
-                .then(grades => {
-                    populateGradeSelector(grades);
-                    // 设置为新创建的年级
-                    const newOption = Array.from(elements.gradeSelect.options)
-                        .find(option => option.textContent === newGradeName);
-                    
-                    if (newOption) {
-                        elements.gradeSelect.value = newOption.value;
-                        loadWordsForGrade(newOption.value);
-                    }
-                    
-                    console.log(`[年级选择] 完成保存到新年级"${newGradeName}"`);
-                    showCustomAlert(`成功创建年级"${newGradeName}"并保存了${wordPairs.length}个单词！`, 3000);
-                })
-                .catch(error => {
-                    console.error('[年级选择] 创建新年级或保存失败:', error);
-                    showCustomAlert('保存失败，请重试！', 3000);
-                })
-                .finally(() => {
-                    document.body.removeChild(dialog);
-                });
-        } else {
-            // 保存到现有年级
-            console.log(`[年级选择] 保存到现有年级，ID: ${selectedValue}`);
-            
-            saveWordsToDB(wordPairs, selectedValue)
-                .then(() => {
-                    // 更新当前游戏的单词
-                    loadWordsForGrade(selectedValue);
-                    console.log(`[年级选择] 完成保存到现有年级ID: ${selectedValue}`);
-                    showCustomAlert(`成功保存了${wordPairs.length}个单词！`, 3000);
-                })
-                .catch(error => {
-                    console.error('[年级选择] 保存到现有年级失败:', error);
-                    showCustomAlert('保存失败，请重试！', 3000);
-                })
-                .finally(() => {
-                    document.body.removeChild(dialog);
-                });
-        }
-    });
+    // 开始游戏计时
+    startGame();
 }
+
+/**
+ * 从登录状态获取用户信息
+ * @returns {Object|null} 用户信息对象，未登录时返回null
+ */
+function getCurrentUser() {
+    try {
+        const userString = localStorage.getItem('user');
+        if (!userString) return null;
+        
+        const user = JSON.parse(userString);
+        // 检查用户数据有效性
+        if (!user || !user.id) return null;
+        
+        return user;
+    } catch (error) {
+        console.error('获取用户信息失败:', error);
+        return null;
+    }
+}
+
+/**
+ * 获取认证Token
+ * @returns {string|null} JWT令牌，未登录时返回null
+ */
+function getAuthToken() {
+    return localStorage.getItem('token');
+}
+
+/**
+ * 检查用户是否已登录
+ * @returns {boolean} 是否已登录
+ */
+function isUserLoggedIn() {
+    return !!getAuthToken() && !!getCurrentUser();
+}
+
+/**
+ * 退出登录
+ */
+function logout() {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    window.location.href = 'index.html';
+}
+
+/**
+ * 重定向到适当的页面
+ * 根据登录状态重定向到首页或仪表盘
+ */
+function redirectToAppropriateScreen() {
+    const isLoggedIn = isUserLoggedIn();
+    const currentPage = window.location.pathname.split('/').pop() || 'index.html';
+    
+    if (isLoggedIn) {
+        // 已登录，但在登录/注册页面或首页，跳转到仪表盘
+        if (['index.html', 'login.html', 'register.html', ''].includes(currentPage)) {
+            window.location.href = 'dashboard.html';
+        }
+    } else {
+        // 未登录，但访问需要登录的页面，跳转到登录页
+        if (currentPage === 'dashboard.html') {
+            window.location.href = 'login.html';
+        }
+    }
+}
+
+// 添加登录状态检查
+document.addEventListener('DOMContentLoaded', function() {
+    // 自动重定向到适当的页面
+    redirectToAppropriateScreen();
+    
+    // 在页面加载时执行登出功能绑定
+    const logoutButton = document.getElementById('logout-button');
+    if (logoutButton) {
+        logoutButton.addEventListener('click', logout);
+    }
+});
+
+// 导出游戏初始化函数到全局作用域
+window.startGameWithWords = startGameWithWords;
+window.startGame = startGame;

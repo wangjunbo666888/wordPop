@@ -1,0 +1,1367 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>个人中心 - 单词消消乐</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Comic+Neue&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9ff;
+            color: #333;
+            line-height: 1.6;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(120, 140, 255, 0.03) 0%, transparent 25%),
+                radial-gradient(circle at 90% 80%, rgba(255, 120, 120, 0.03) 0%, transparent 25%);
+            background-attachment: fixed;
+        }
+
+        .user-info {
+            background-color: #f5f5f5;
+            padding: 10px 15px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .user-info .user-details {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .user-info .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: #4CAF50;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 18px;
+        }
+        
+        .user-info .user-name {
+            font-weight: bold;
+            font-size: 16px;
+        }
+        
+        .user-info .user-grade {
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .logout-button {
+            background-color: transparent;
+            border: 1px solid #f44336;
+            color: #f44336;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .logout-button:hover {
+            background-color: #f44336;
+            color: white;
+        }
+        
+        .card {
+            background: linear-gradient(135deg, #ff7e7e 0%, #ff9e9e 100%);
+            border-radius: 10px;
+            padding: 8px 15px;
+            color: white;
+            min-width: 80px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s ease;
+            cursor: pointer;
+        }
+
+        #translations-container .card {
+            background: linear-gradient(135deg, #4ecdc4 0%, #56e0d6 100%);
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+        }
+
+        .game-board {
+            display: flex;
+            justify-content: space-between;
+            gap: 20px;
+        }
+
+        .card-column {
+            flex: 1;
+            background-color: white;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .cards-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            justify-content: center;
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 15px;
+            color: #4747b3;
+            font-size: 18px;
+        }
+        
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-card {
+            background-color: #f9f9f9;
+            border-radius: 5px;
+            padding: 15px;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #4CAF50;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            font-size: 14px;
+            color: #666;
+        }
+        
+        /* 错误记录面板默认隐藏 */
+        #error-records-panel {
+            display: none;
+            margin-top: 20px;
+        }
+
+        /* 新添加的样式 */
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #f5f5f5;
+            padding: 10px 15px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+        }
+
+        .user-info-section {
+            display: flex;
+            align-items: center;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: #4CAF50;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 24px;
+            margin-right: 5px;
+        }
+
+        .user-text-info {
+            margin-left: 10px;
+            display: flex;
+            align-items: center;
+            font-size: 16px;
+            font-weight: 500;
+        }
+        
+        .user-text-info div {
+            margin-right: 15px;
+            font-size: 16px;
+        }
+
+        .user-text-info span {
+            font-weight: normal;
+        }
+
+        .game-options {
+            display: flex;
+            align-items: center;
+        }
+
+        .option-group {
+            margin-left: 20px;
+        }
+
+        .personal-center-link {
+            margin-left: 20px;
+            color: #4CAF50;
+            text-decoration: none;
+            font-size: 16px;
+        }
+
+        .personal-center-link:hover {
+            text-decoration: underline;
+        }
+
+        .game-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            padding: 10px 0;
+            text-align: right;
+        }
+        
+        .control-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+            background-color: #f8f9ff;
+        }
+
+        .game-info {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            font-size: 16px;
+            color: #333;
+        }
+
+        .timer, .score {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 16px;
+        }
+
+        #timer-value, #score-value {
+            font-weight: bold;
+            color: #4040cc;
+        }
+
+        button {
+            padding: 8px 15px;
+            background: #6c7ae0;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+
+        #start-game, #import-file, #download-template {
+            background-color: #5f5bf1;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-size: 15px;
+        }
+
+        #restart-game {
+            background-color: #4CAF50;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-size: 15px;
+        }
+
+        #start-game:hover, #import-file:hover, #download-template:hover {
+            background-color: #4f4bd1;
+        }
+
+        #restart-game:hover {
+            background-color: #3e9e41;
+        }
+
+        select {
+            padding: 5px 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        /* 移除单词卡片上的喇叭图标 */
+        .word-card:hover::after {
+            display: none !important;
+            content: none !important;
+        }
+
+        /* 单词本管理相关样式 */
+        .wordbook-manager {
+            display: none;
+            margin-top: 20px;
+            background-color: white;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+        
+        .wordbook-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .wordbook-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .wordbook-card {
+            background-color: #f9f9f9;
+            border-radius: 5px;
+            padding: 15px;
+            position: relative;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            border: 1px solid #eee;
+        }
+        
+        .wordbook-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .wordbook-card.default {
+            border: 2px solid #4ecdc4;
+        }
+        
+        .wordbook-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #333;
+        }
+        
+        .wordbook-description {
+            color: #666;
+            font-size: 13px;
+            margin-bottom: 10px;
+            height: 40px;
+            overflow: hidden;
+        }
+        
+        .wordbook-meta {
+            font-size: 12px;
+            color: #999;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .wordbook-actions {
+            margin-top: 8px;
+            display: flex;
+            gap: 8px;
+        }
+        
+        .wordbook-actions button {
+            font-size: 12px;
+            padding: 4px 8px;
+        }
+        
+        .default-badge {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background-color: #4ecdc4;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 10px;
+        }
+        
+        #add-wordbook-form {
+            display: none;
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+        }
+        
+        .form-row {
+            margin-bottom: 15px;
+        }
+        
+        .form-row label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        .form-row input,
+        .form-row textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        
+        .form-row textarea {
+            height: 80px;
+            resize: vertical;
+        }
+        
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+        
+        /* 单词源选择对话框 */
+        .word-source-dialog {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .word-source-content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .word-source-title {
+            font-size: 18px;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        
+        .word-source-option {
+            margin-bottom: 10px;
+        }
+        
+        .word-source-option label {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        .word-source-option input {
+            margin-right: 10px;
+        }
+        
+        .word-source-option label:hover {
+            background-color: #f9f9f9;
+        }
+        
+        .word-source-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 模块2：用户信息和选项 -->
+        <div class="header-container">
+            <div class="user-info-section">
+                <div class="user-avatar" id="user-avatar"></div>
+                <div class="user-text-info">
+                    <div>昵称：<span id="user-name"></span></div>
+                    <div>年级：<span id="user-grade"></span></div>
+                </div>
+            </div>
+            
+            <div class="game-options">
+                <div class="option-group">
+                    <label for="word-count">单词数量：</label>
+                    <select id="word-count">
+                        <option value="5">5个</option>
+                        <option value="10" selected>10个</option>
+                        <option value="15">15个</option>
+                        <option value="20">20个</option>
+                    </select>
+                </div>
+                
+                <div class="option-group">
+                    <label for="difficulty">难度：</label>
+                    <select id="difficulty">
+                        <option value="easy">简单</option>
+                        <option value="medium" selected>中等</option>
+                        <option value="hard">困难</option>
+                    </select>
+                </div>
+                
+                <a href="dashboard.html" class="personal-center-link">个人中心</a>
+            </div>
+        </div>
+        
+        <!-- 模块3：游戏控制按钮移到右侧 -->
+        <div class="game-controls">
+            <div class="game-info">
+                <div class="timer">
+                    <span id="timer-label">剩余时间：</span>
+                    <span id="timer-value">60</span>
+                    <span>秒</span>
+                </div>
+                <div class="score">
+                    <span>得分：</span>
+                    <span id="score-value">0</span>
+                </div>
+            </div>
+            <div class="control-buttons">
+                <button id="start-game">选择单词源</button>
+                <button id="restart-game" style="display: none;">重新开始</button>
+                <input type="file" id="file-input" accept=".xlsx,.xls,.csv" style="display: none;">
+                <button id="import-file">导入Excel</button>
+                <button id="download-template">下载模板</button>
+            </div>
+        </div>
+        
+        <div class="game-board">
+            <div class="card-column" id="words-column">
+                <h2>英文单词</h2>
+                <div class="cards-container" id="words-container">
+                    <!-- 单词卡片将动态生成 -->
+                </div>
+            </div>
+            <div class="card-column" id="translations-column">
+                <h2>中文释义</h2>
+                <div class="cards-container" id="translations-container">
+                    <!-- 释义卡片将动态生成 -->
+                </div>
+            </div>
+        </div>
+        
+        <!-- 单词本管理区域 -->
+        <div class="wordbook-manager" id="wordbook-manager">
+            <div class="wordbook-header">
+                <h2>我的单词本</h2>
+                <button id="show-add-wordbook">创建单词本</button>
+            </div>
+            
+            <div class="wordbook-list" id="wordbook-list">
+                <!-- 单词本卡片将动态生成 -->
+            </div>
+            
+            <form id="add-wordbook-form">
+                <div class="form-row">
+                    <label for="wordbook-name">单词本名称</label>
+                    <input type="text" id="wordbook-name" required placeholder="输入单词本名称">
+                </div>
+                <div class="form-row">
+                    <label for="wordbook-description">描述</label>
+                    <textarea id="wordbook-description" placeholder="描述这个单词本的内容"></textarea>
+                </div>
+                <div class="form-row">
+                    <label>
+                        <input type="checkbox" id="is-default-wordbook"> 设为默认单词本
+                    </label>
+                </div>
+                <div class="form-actions">
+                    <button type="button" id="cancel-add-wordbook">取消</button>
+                    <button type="submit" id="submit-add-wordbook">保存</button>
+                </div>
+            </form>
+        </div>
+        
+        <!-- 单词源选择对话框 -->
+        <div class="word-source-dialog" id="word-source-dialog">
+            <div class="word-source-content">
+                <div class="word-source-title">选择单词源</div>
+                
+                <div class="word-source-option">
+                    <label>
+                        <input type="checkbox" id="use-system-words" checked> 
+                        使用系统单词库（根据年级和教材版本）
+                    </label>
+                </div>
+                
+                <div class="word-source-option">
+                    <strong>我的单词本</strong>
+                    <div id="user-wordbooks-options">
+                        <!-- 用户单词本选项将动态生成 -->
+                    </div>
+                </div>
+                
+                <div class="word-source-actions">
+                    <button id="cancel-word-source">取消</button>
+                    <button id="confirm-word-source">确认</button>
+                </div>
+            </div>
+        </div>
+        
+        <div id="combo-effect" class="combo-effect"></div>
+        <div id="flash-effect" class="flash-effect"></div>
+        
+        <!-- 错误记录面板 -->
+        <div id="error-records-panel" class="error-records-panel">
+            <h2>错误记录</h2>
+            <div id="error-records-list" class="error-records-list"></div>
+        </div>
+    </div>
+    
+    <!-- 撒花效果容器 -->
+    <div id="confetti-container"></div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 检查用户是否已登录
+            const token = localStorage.getItem('token');
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            
+            if (!token || !user.id) {
+                // 未登录，重定向到登录页面
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            // 显示用户信息
+            const userAvatar = document.getElementById('user-avatar');
+            const userName = document.getElementById('user-name');
+            const userGrade = document.getElementById('user-grade');
+            
+            // 显示昵称首字母作为头像
+            userAvatar.textContent = user.nickname ? user.nickname.charAt(0).toUpperCase() : '?';
+            userName.textContent = user.nickname || '用户';
+            
+            // 转换年级ID为显示名称
+            const gradeNames = {
+                'grade1': '小学一年级',
+                'grade2': '小学二年级',
+                'grade3': '小学三年级',
+                'grade4': '小学四年级',
+                'grade5': '小学五年级',
+                'grade6': '小学六年级',
+                'junior1': '初中一年级',
+                'junior2': '初中二年级',
+                'junior3': '初中三年级'
+            };
+            userGrade.textContent = gradeNames[user.grade] || user.grade || '未设置年级';
+            
+            // 退出登录
+            const logoutButton = document.getElementById('logout-button');
+            if (logoutButton) {
+                logoutButton.addEventListener('click', function() {
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('user');
+                    window.location.href = 'index.html';
+                });
+            }
+            
+            // 为开始游戏按钮添加事件
+            const startGameButton = document.getElementById('start-game');
+            if (startGameButton) {
+                startGameButton.addEventListener('click', function() {
+                    showWordSourceDialog();
+                });
+            }
+            
+            // 为重新开始按钮添加事件
+            const restartGameButton = document.getElementById('restart-game');
+            if (restartGameButton) {
+                restartGameButton.addEventListener('click', function() {
+                    // 使用上次的单词源设置重新开始游戏
+                    restartGameWithLastWordSource();
+                });
+            }
+            
+            // 显示单词源选择对话框
+            function showWordSourceDialog() {
+                // 加载用户的单词本
+                fetchUserWordbooks().then(wordbooks => {
+                    const wordbooksContainer = document.getElementById('user-wordbooks-options');
+                    if (!wordbooksContainer) {
+                        console.error('未找到user-wordbooks-options元素');
+                        return;
+                    }
+                    wordbooksContainer.innerHTML = '';
+                    
+                    if (wordbooks.length === 0) {
+                        wordbooksContainer.innerHTML = '<p>暂无单词本</p>';
+                    } else {
+                        wordbooks.forEach(wordbook => {
+                            const option = document.createElement('div');
+                            option.className = 'word-source-option';
+                            option.innerHTML = `
+                                <label>
+                                    <input type="checkbox" data-wordbook-id="${wordbook.id}" ${wordbook.is_default ? 'checked' : ''}>
+                                    ${wordbook.name} ${wordbook.is_default ? '(默认)' : ''}
+                                </label>
+                            `;
+                            wordbooksContainer.appendChild(option);
+                        });
+                    }
+                    
+                    const wordSourceDialog = document.getElementById('word-source-dialog');
+                    if (wordSourceDialog) {
+                        wordSourceDialog.style.display = 'flex';
+                    }
+                });
+            }
+            
+            // 处理单词源选择
+            const confirmWordSourceButton = document.getElementById('confirm-word-source');
+            if (confirmWordSourceButton) {
+                confirmWordSourceButton.addEventListener('click', function() {
+                    const useSystemWords = document.getElementById('use-system-words');
+                    const useSystemWordsChecked = useSystemWords ? useSystemWords.checked : false;
+                    
+                    // 获取选中的单词本
+                    const selectedWordbooks = [];
+                    document.querySelectorAll('#user-wordbooks-options input[type="checkbox"]:checked').forEach(checkbox => {
+                        selectedWordbooks.push(checkbox.dataset.wordbookId);
+                    });
+                    
+                    // 如果没有选择任何单词源，提示用户
+                    if (!useSystemWordsChecked && selectedWordbooks.length === 0) {
+                        alert('请至少选择一个单词源');
+                        return;
+                    }
+                    
+                    const wordSourceDialog = document.getElementById('word-source-dialog');
+                    if (wordSourceDialog) {
+                        wordSourceDialog.style.display = 'none';
+                    }
+                    
+                    // 获取游戏设置
+                    const wordCountElem = document.getElementById('word-count');
+                    const difficultyElem = document.getElementById('difficulty');
+                    const wordCount = wordCountElem ? wordCountElem.value : 10; // 默认10个单词
+                    const difficulty = difficultyElem ? difficultyElem.value : 'medium'; // 默认中等难度
+                    
+                    // 获取游戏单词
+                    fetch('/api/words/game', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({
+                            useSystemWords: useSystemWordsChecked,
+                            selectedWordbooks,
+                            limit: wordCount
+                        })
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('获取单词失败');
+                        }
+                        return response.json();
+                    })
+                    .then(words => {
+                        // 保存单词源配置以便重新开始游戏
+                        localStorage.setItem('lastWordSource', JSON.stringify({
+                            useSystemWords: useSystemWordsChecked,
+                            selectedWordbooks: selectedWordbooks,
+                            wordCount: wordCount,
+                            difficulty: difficulty
+                        }));
+                        
+                        // 显示重新开始按钮
+                        const restartGameButton = document.getElementById('restart-game');
+                        if (restartGameButton) {
+                            restartGameButton.style.display = 'inline-block';
+                        }
+                        
+                        // 调用游戏初始化函数
+                        if (typeof window.startGameWithWords === 'function') {
+                            window.startGameWithWords(words, difficulty);
+                            
+                            // 添加监听游戏结束事件的处理
+                            window.gameEndHandler = function() {
+                                // 游戏结束时隐藏重新开始按钮
+                                const restartGameButton = document.getElementById('restart-game');
+                                if (restartGameButton) {
+                                    restartGameButton.style.display = 'none';
+                                }
+                            };
+                        } else {
+                            console.error('游戏初始化函数未定义');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('加载单词出错:', error);
+                        alert('加载单词失败，请稍后重试');
+                    });
+                });
+            }
+            
+            // 取消单词源选择
+            const cancelWordSourceButton = document.getElementById('cancel-word-source');
+            if (cancelWordSourceButton) {
+                cancelWordSourceButton.addEventListener('click', function() {
+                    const wordSourceDialog = document.getElementById('word-source-dialog');
+                    if (wordSourceDialog) {
+                        wordSourceDialog.style.display = 'none';
+                    }
+                });
+            }
+            
+            // 导入Excel功能 - 重写以防止重复触发
+            const importFileButton = document.getElementById('import-file');
+            const fileInput = document.getElementById('file-input');
+            
+            // 移除可能存在的所有处理程序，确保只有一个事件处理函数
+            if (importFileButton) importFileButton.onclick = null;
+            if (fileInput) fileInput.onchange = null;
+            
+            if (importFileButton && fileInput) {
+                // 添加新的事件处理函数
+                importFileButton.onclick = function(e) {
+                    // 防止事件冒泡和默认行为
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    // 如果正在处理中，则忽略该点击
+                    if (importFileButton.dataset.processing === 'true') {
+                        console.log('导入按钮正在处理中，忽略重复点击');
+                        return;
+                    }
+                    
+                    // 标记为正在处理
+                    importFileButton.dataset.processing = 'true';
+                    
+                    console.log('导入按钮被点击');
+                    
+                    // 先获取用户的单词本
+                    fetchUserWordbooks().then(wordbooks => {
+                        if (wordbooks.length === 0) {
+                            alert('请先创建单词本');
+                            const wordbookManager = document.getElementById('wordbook-manager');
+                            if (wordbookManager) {
+                                wordbookManager.style.display = 'block';
+                                const showAddWordbookButton = document.getElementById('show-add-wordbook');
+                                if (showAddWordbookButton) {
+                                    showAddWordbookButton.click();
+                                }
+                            }
+                        } else {
+                            let defaultWordbook = wordbooks.find(wb => wb.is_default);
+                            if (!defaultWordbook && wordbooks.length > 0) {
+                                defaultWordbook = wordbooks[0];
+                            }
+                            
+                            if (defaultWordbook) {
+                                localStorage.setItem('current_wordbook_id', defaultWordbook.id);
+                                
+                                // 确保文件输入为空，以便重复选择同一文件也能触发change事件
+                                fileInput.value = '';
+                                
+                                // 使用setTimeout延迟点击行为，避免连续触发
+                                setTimeout(() => {
+                                    fileInput.click();
+                                    
+                                    // 延迟重置处理标志
+                                    setTimeout(() => {
+                                        importFileButton.dataset.processing = 'false';
+                                        console.log('导入按钮处理完成');
+                                    }, 1000);
+                                }, 100);
+                            } else {
+                                alert('无法确定默认单词本，请先创建单词本');
+                                importFileButton.dataset.processing = 'false';
+                            }
+                        }
+                    }).catch(error => {
+                        console.error('获取单词本出错:', error);
+                        importFileButton.dataset.processing = 'false';
+                    });
+                };
+            }
+            
+            if (fileInput) {
+                fileInput.onchange = function(e) {
+                    // 如果正在处理中，则忽略该变更
+                    if (fileInput.dataset.processing === 'true') {
+                        console.log('文件输入正在处理中，忽略重复事件');
+                        return;
+                    }
+                    
+                    // 标记为正在处理
+                    fileInput.dataset.processing = 'true';
+                    
+                    console.log('文件选择框发生变化');
+                    
+                    if (e.target.files.length === 0) {
+                        fileInput.dataset.processing = 'false';
+                        return;
+                    }
+                    
+                    const file = e.target.files[0];
+                    const reader = new FileReader();
+                    const wordbookId = localStorage.getItem('current_wordbook_id');
+                    
+                    if (!wordbookId) {
+                        alert('请先选择单词本');
+                        fileInput.dataset.processing = 'false';
+                        return;
+                    }
+                    
+                    reader.onload = function(e) {
+                        try {
+                            const data = new Uint8Array(e.target.result);
+                            const workbook = XLSX.read(data, { type: 'array' });
+                            const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                            const jsonData = XLSX.utils.sheet_to_json(firstSheet);
+                            
+                            // 检查数据格式
+                            if (jsonData.length === 0) {
+                                alert('Excel文件中没有数据');
+                                fileInput.dataset.processing = 'false';
+                                return;
+                            }
+                            
+                            // 检查必要字段
+                            const firstRow = jsonData[0];
+                            if (!firstRow.word || !firstRow.translation) {
+                                alert('Excel格式不正确，请确保包含word和translation列');
+                                fileInput.dataset.processing = 'false';
+                                return;
+                            }
+                            
+                            // 准备要保存的单词数据
+                            const wordPairs = jsonData.map(row => ({
+                                word: row.word,
+                                translation: row.translation,
+                                unit: row.unit || ''
+                            }));
+                            
+                            // 保存到用户单词本
+                            fetch(`/api/wordbooks/${wordbookId}/words`, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'Authorization': `Bearer ${token}`
+                                },
+                                body: JSON.stringify({
+                                    words: wordPairs
+                                })
+                            })
+                            .then(response => {
+                                if (!response.ok) throw new Error('保存单词失败');
+                                return response.json();
+                            })
+                            .then(data => {
+                                alert(`成功导入 ${data.added} 个单词，合并 ${data.merged} 个重复单词`);
+                                // 清空文件输入
+                                fileInput.value = '';
+                                fileInput.dataset.processing = 'false';
+                                console.log('文件处理完成');
+                            })
+                            .catch(error => {
+                                console.error('导入单词错误:', error);
+                                alert('导入单词失败，请稍后重试');
+                                fileInput.dataset.processing = 'false';
+                            });
+                        } catch (error) {
+                            console.error('处理Excel出错:', error);
+                            alert('Excel文件格式错误，请使用正确的模板');
+                            fileInput.dataset.processing = 'false';
+                        }
+                    };
+                    
+                    reader.onerror = function() {
+                        console.error('读取文件出错');
+                        alert('读取文件失败');
+                        fileInput.dataset.processing = 'false';
+                    };
+                    
+                    reader.readAsArrayBuffer(file);
+                };
+            }
+            
+            // 下载模板功能 - 重写以防止重复触发
+            const downloadTemplateButton = document.getElementById('download-template');
+            if (downloadTemplateButton) {
+                // 移除可能存在的所有处理程序
+                downloadTemplateButton.onclick = null;
+                
+                // 添加新的事件处理函数
+                downloadTemplateButton.onclick = function(e) {
+                    // 防止事件冒泡和默认行为
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    // 如果正在处理中，则忽略该点击
+                    if (downloadTemplateButton.dataset.processing === 'true') {
+                        console.log('模板下载按钮正在处理中，忽略重复点击');
+                        return;
+                    }
+                    
+                    // 标记为正在处理
+                    downloadTemplateButton.dataset.processing = 'true';
+                    
+                    console.log('开始生成和下载模板');
+                    
+                    try {
+                        // 创建一个简单的Excel模板
+                        const template = [
+                            { word: 'apple', translation: '苹果', unit: '1' },
+                            { word: 'banana', translation: '香蕉', unit: '1' }
+                        ];
+                        
+                        const worksheet = XLSX.utils.json_to_sheet(template);
+                        const workbook = XLSX.utils.book_new();
+                        XLSX.utils.book_append_sheet(workbook, worksheet, "单词模板");
+                        
+                        // 创建一个带有时间戳的文件名，确保每次下载文件名不同
+                        const timestamp = new Date().getTime();
+                        const fileName = `单词导入模板_${timestamp}.xlsx`;
+                        
+                        // 生成Excel文件并触发下载
+                        XLSX.writeFile(workbook, fileName);
+                        
+                        console.log('模板下载完成', fileName);
+                    } catch (error) {
+                        console.error('生成模板出错:', error);
+                        alert('生成模板失败，请稍后重试');
+                    }
+                    
+                    // 延迟重置处理标志
+                    setTimeout(() => {
+                        downloadTemplateButton.dataset.processing = 'false';
+                    }, 1000);
+                };
+            }
+            
+            // 单词本管理功能
+            const personalCenterLink = document.getElementById('personal-center-link');
+            if (personalCenterLink) {
+                personalCenterLink.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const wordbookManager = document.getElementById('wordbook-manager');
+                    if (wordbookManager) {
+                        if (wordbookManager.style.display === 'block') {
+                            wordbookManager.style.display = 'none';
+                        } else {
+                            wordbookManager.style.display = 'block';
+                            loadWordbooks();
+                        }
+                    }
+                });
+            }
+            
+            // 加载用户的单词本
+            function loadWordbooks() {
+                fetchUserWordbooks().then(wordbooks => {
+                    const wordbookList = document.getElementById('wordbook-list');
+                    if (!wordbookList) {
+                        console.error('未找到wordbook-list元素');
+                        return;
+                    }
+                    
+                    wordbookList.innerHTML = '';
+                    
+                    if (wordbooks.length === 0) {
+                        wordbookList.innerHTML = '<p>暂无单词本，请点击"创建单词本"按钮创建</p>';
+                    } else {
+                        wordbooks.forEach(wordbook => {
+                            const wordbookCard = document.createElement('div');
+                            wordbookCard.className = `wordbook-card${wordbook.is_default ? ' default' : ''}`;
+                            wordbookCard.innerHTML = `
+                                ${wordbook.is_default ? '<div class="default-badge">默认</div>' : ''}
+                                <div class="wordbook-name">${wordbook.name}</div>
+                                <div class="wordbook-description">${wordbook.description || '无描述'}</div>
+                                <div class="wordbook-meta">
+                                    <span>创建于: ${new Date(wordbook.created_at).toLocaleDateString()}</span>
+                                </div>
+                                <div class="wordbook-actions">
+                                    <button class="edit-wordbook" data-id="${wordbook.id}">编辑</button>
+                                    ${!wordbook.is_default ? `<button class="delete-wordbook" data-id="${wordbook.id}">删除</button>` : ''}
+                                    ${!wordbook.is_default ? `<button class="set-default-wordbook" data-id="${wordbook.id}">设为默认</button>` : ''}
+                                </div>
+                            `;
+                            wordbookList.appendChild(wordbookCard);
+                        });
+                        
+                        // 添加编辑和删除事件
+                        document.querySelectorAll('.edit-wordbook').forEach(button => {
+                            button.addEventListener('click', function() {
+                                const wordbookId = this.dataset.id;
+                                const wordbook = wordbooks.find(wb => wb.id === wordbookId);
+                                if (wordbook) {
+                                    // 显示编辑表单
+                                    const nameInput = document.getElementById('wordbook-name');
+                                    const descInput = document.getElementById('wordbook-description');
+                                    const defaultCheck = document.getElementById('is-default-wordbook');
+                                    const addForm = document.getElementById('add-wordbook-form');
+                                    
+                                    if (nameInput) nameInput.value = wordbook.name;
+                                    if (descInput) descInput.value = wordbook.description || '';
+                                    if (defaultCheck) defaultCheck.checked = wordbook.is_default;
+                                    
+                                    // 保存要编辑的单词本ID
+                                    if (addForm) {
+                                        addForm.dataset.editId = wordbookId;
+                                        addForm.style.display = 'block';
+                                    }
+                                }
+                            });
+                        });
+                        
+                        document.querySelectorAll('.delete-wordbook').forEach(button => {
+                            button.addEventListener('click', function() {
+                                const wordbookId = this.dataset.id;
+                                if (confirm('确定要删除这个单词本吗？所有相关单词也将被删除。')) {
+                                    deleteWordbook(wordbookId);
+                                }
+                            });
+                        });
+                        
+                        document.querySelectorAll('.set-default-wordbook').forEach(button => {
+                            button.addEventListener('click', function() {
+                                const wordbookId = this.dataset.id;
+                                setDefaultWordbook(wordbookId);
+                            });
+                        });
+                    }
+                });
+            }
+            
+            // 获取用户单词本
+            function fetchUserWordbooks() {
+                return fetch('/api/wordbooks', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('获取单词本失败');
+                    }
+                    return response.json();
+                })
+                .catch(error => {
+                    console.error('获取单词本失败:', error);
+                    return [];
+                });
+            }
+            
+            // 创建单词本
+            const showAddWordbookButton = document.getElementById('show-add-wordbook');
+            if (showAddWordbookButton) {
+                showAddWordbookButton.addEventListener('click', function() {
+                    // 清空表单
+                    const nameInput = document.getElementById('wordbook-name');
+                    const descInput = document.getElementById('wordbook-description');
+                    const defaultCheck = document.getElementById('is-default-wordbook');
+                    const addForm = document.getElementById('add-wordbook-form');
+                    
+                    if (nameInput) nameInput.value = '';
+                    if (descInput) descInput.value = '';
+                    if (defaultCheck) defaultCheck.checked = false;
+                    
+                    // 移除编辑ID
+                    if (addForm) {
+                        delete addForm.dataset.editId;
+                        addForm.style.display = 'block';
+                    }
+                });
+            }
+            
+            const cancelAddWordbookButton = document.getElementById('cancel-add-wordbook');
+            if (cancelAddWordbookButton) {
+                cancelAddWordbookButton.addEventListener('click', function() {
+                    const addForm = document.getElementById('add-wordbook-form');
+                    if (addForm) {
+                        addForm.style.display = 'none';
+                    }
+                });
+            }
+            
+            const addWordbookForm = document.getElementById('add-wordbook-form');
+            if (addWordbookForm) {
+                addWordbookForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    
+                    const nameInput = document.getElementById('wordbook-name');
+                    const descInput = document.getElementById('wordbook-description');
+                    const defaultCheck = document.getElementById('is-default-wordbook');
+                    
+                    const name = nameInput ? nameInput.value : '';
+                    const description = descInput ? descInput.value : '';
+                    const isDefault = defaultCheck ? defaultCheck.checked : false;
+                    const editId = this.dataset.editId;
+                    
+                    if (!name) {
+                        alert('请输入单词本名称');
+                        return;
+                    }
+                    
+                    const wordbookData = {
+                        name,
+                        description,
+                        is_default: isDefault
+                    };
+                    
+                    // 创建或更新单词本
+                    const url = editId ? `/api/wordbooks/${editId}` : '/api/wordbooks';
+                    const method = editId ? 'PUT' : 'POST';
+                    
+                    fetch(url, {
+                        method,
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify(wordbookData)
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('操作单词本失败');
+                        }
+                        return response.json();
+                    })
+                    .then(() => {
+                        const addForm = document.getElementById('add-wordbook-form');
+                        if (addForm) {
+                            addForm.style.display = 'none';
+                        }
+                        loadWordbooks();
+                    })
+                    .catch(error => {
+                        console.error('操作单词本失败:', error);
+                        alert('操作失败，请稍后重试');
+                    });
+                });
+            }
+            
+            // 删除单词本
+            function deleteWordbook(wordbookId) {
+                fetch(`/api/wordbooks/${wordbookId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        return response.json().then(err => {
+                            throw new Error(err.error || '删除单词本失败');
+                        });
+                    }
+                    return response.json();
+                })
+                .then(() => {
+                    loadWordbooks();
+                })
+                .catch(error => {
+                    console.error('删除单词本失败:', error);
+                    alert(error.message || '删除失败，请稍后重试');
+                });
+            }
+            
+            // 设置默认单词本
+            function setDefaultWordbook(wordbookId) {
+                fetch(`/api/wordbooks/${wordbookId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        is_default: true
+                    })
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('设置默认单词本失败');
+                    }
+                    return response.json();
+                })
+                .then(() => {
+                    loadWordbooks();
+                })
+                .catch(error => {
+                    console.error('设置默认单词本失败:', error);
+                    alert('设置失败，请稍后重试');
+                });
+            }
+
+            // 添加重新开始游戏的函数
+            function restartGameWithLastWordSource() {
+                const lastWordSourceStr = localStorage.getItem('lastWordSource');
+                if (!lastWordSourceStr) {
+                    // 如果没有上次的单词源配置，则打开单词源选择对话框
+                    showWordSourceDialog();
+                    return;
+                }
+                
+                try {
+                    const lastWordSource = JSON.parse(lastWordSourceStr);
+                    const { useSystemWords, selectedWordbooks, wordCount, difficulty } = lastWordSource;
+                    
+                    // 获取游戏单词
+                    fetch('/api/words/game', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({
+                            useSystemWords: useSystemWords,
+                            selectedWordbooks: selectedWordbooks,
+                            limit: wordCount
+                        })
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('获取单词失败');
+                        }
+                        return response.json();
+                    })
+                    .then(words => {
+                        // 调用游戏初始化函数
+                        if (typeof window.startGameWithWords === 'function') {
+                            window.startGameWithWords(words, difficulty);
+                        } else {
+                            console.error('游戏初始化函数未定义');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('加载单词出错:', error);
+                        alert('重新开始游戏失败，请稍后重试');
+                    });
+                } catch (error) {
+                    console.error('解析上次单词源配置出错:', error);
+                    showWordSourceDialog();
+                }
+            }
+        });
+    </script>
+    <script src="wordbook-manager.js"></script>
+    <script src="script.js"></script>
+</body>
+</html> 
