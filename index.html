@@ -4,8 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>单词消消乐</title>
+    <!-- 预加载核心脚本 -->
+    <link rel="preload" href="script.js" as="script">
     <link rel="stylesheet" href="styles.css">
-    <link href="https://fonts.googleapis.com/css2?family=Comic+Neue&display=swap" rel="stylesheet">
+    <!-- 优化字体加载 -->
+    <link href="https://fonts.googleapis.com/css2?family=Comic+Neue&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript><link href="https://fonts.googleapis.com/css2?family=Comic+Neue&display=swap" rel="stylesheet"></noscript>
     <style>
         .auth-buttons {
             display: flex;
@@ -83,6 +87,24 @@
             margin-top: 20px;
         }
     </style>
+    <!-- 提前检查登录状态，快速重定向 -->
+    <script>
+        // 立即检查登录状态，不等待DOM加载
+        (function() {
+            try {
+                const token = localStorage.getItem('token');
+                const user = JSON.parse(localStorage.getItem('user') || '{}');
+                
+                if (token && user.id) {
+                    // 已登录，立即重定向到仪表盘页面
+                    window.location.href = 'dashboard.html';
+                }
+            } catch (e) {
+                console.error('检查登录状态出错:', e);
+                // 忽略错误，让页面继续加载
+            }
+        })();
+    </script>
 </head>
 <body>
     <div class="container">
@@ -161,20 +183,166 @@
     <!-- 撒花效果容器 -->
     <div id="confetti-container"></div>
     
-    <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+    <!-- 按需加载xlsx库 -->
     <script>
-        // 检查用户是否已登录
-        document.addEventListener('DOMContentLoaded', function() {
-            const token = localStorage.getItem('token');
-            const user = JSON.parse(localStorage.getItem('user') || '{}');
+        // 延迟加载非关键资源
+        let xlsxLoaded = false;
+        function loadXlsxLibrary() {
+            if (xlsxLoaded) return Promise.resolve();
             
-            if (token && user.id) {
-                // 已登录，重定向到仪表盘页面
-                window.location.href = 'dashboard.html';
+            return new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                script.src = 'https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js';
+                script.onload = () => {
+                    xlsxLoaded = true;
+                    resolve();
+                };
+                script.onerror = reject;
+                document.head.appendChild(script);
+            });
+        }
+    </script>
+    
+    <script>
+        // 添加游戏相关的基本功能
+        window.gameState = {
+            started: false,
+            selectedWord: null,
+            selectedTranslation: null,
+            timeRemaining: 60,
+            score: 0,
+            matchedPairs: 0
+        };
+        
+        // 处理英文单词卡片点击
+        function handleWordCardClick(e) {
+            if (!window.gameState.started) return;
+            
+            const card = e.target.closest('.card');
+            if (!card) return;
+            
+            // 如果该卡片已匹配，不执行操作
+            if (card.classList.contains('matched')) return;
+            
+            console.log('点击英文单词:', card.textContent);
+            
+            // 取消选中之前的单词卡片
+            const prevSelectedWord = document.querySelector('.card.selected');
+            if (prevSelectedWord) {
+                prevSelectedWord.classList.remove('selected');
+            }
+            
+            // 选中当前卡片
+            card.classList.add('selected');
+            window.gameState.selectedWord = card;
+            
+            // 如果有释义卡片已选中，检查匹配
+            if (window.gameState.selectedTranslation) {
+                checkMatch();
+            }
+        }
+        
+        // 处理中文释义卡片点击
+        function handleTranslationCardClick(e) {
+            if (!window.gameState.started) return;
+            
+            const card = e.target.closest('.card');
+            if (!card) return;
+            
+            // 如果该卡片已匹配，不执行操作
+            if (card.classList.contains('matched')) return;
+            
+            console.log('点击中文释义:', card.textContent);
+            
+            // 取消选中之前的释义卡片
+            const prevSelectedTranslation = document.querySelector('.card.selected');
+            if (prevSelectedTranslation && prevSelectedTranslation !== window.gameState.selectedWord) {
+                prevSelectedTranslation.classList.remove('selected');
+            }
+            
+            // 选中当前卡片
+            card.classList.add('selected');
+            window.gameState.selectedTranslation = card;
+            
+            // 如果有单词卡片已选中，检查匹配
+            if (window.gameState.selectedWord) {
+                checkMatch();
+            }
+        }
+        
+        // 检查匹配函数
+        function checkMatch() {
+            const wordCard = window.gameState.selectedWord;
+            const translationCard = window.gameState.selectedTranslation;
+            
+            console.log('检查匹配:', wordCard, translationCard);
+            
+            if (!wordCard || !translationCard) {
+                console.log('没有选中卡片，无法匹配');
                 return;
             }
             
-            // 未登录用户看到的默认界面
+            const wordText = wordCard.textContent.trim();
+            const translationText = translationCard.textContent.trim();
+            
+            console.log('匹配词对:', wordText, translationText);
+            
+            // 检查匹配
+            let isMatch = false;
+            
+            if (window.defaultWordPairs && window.defaultWordPairs.length > 0) {
+                // 使用defaultWordPairs检查匹配
+                isMatch = window.defaultWordPairs.some(pair => {
+                    return (
+                        (pair.word.trim() === wordText && pair.translation.trim() === translationText) ||
+                        (pair.word.trim() === translationText && pair.translation.trim() === wordText)
+                    );
+                });
+                console.log('通过defaultWordPairs检查匹配结果:', isMatch);
+            }
+            
+            if (isMatch) {
+                // 匹配成功
+                console.log('匹配成功!');
+                wordCard.classList.add('matched');
+                translationCard.classList.add('matched');
+                
+                // 增加分数
+                window.gameState.score += 10;
+                const scoreValue = document.getElementById('score-value');
+                if (scoreValue) {
+                    scoreValue.textContent = window.gameState.score;
+                }
+                
+                // 增加匹配对数
+                window.gameState.matchedPairs++;
+                
+                // 检查是否所有卡片都已匹配
+                const totalPairs = window.defaultWordPairs ? Math.min(window.defaultWordPairs.length, parseInt(document.getElementById('word-count').value)) : 0;
+                if (window.gameState.matchedPairs >= totalPairs) {
+                    // 游戏胜利
+                    console.log('游戏胜利!');
+                    clearInterval(window.gameState.timer);
+                    alert('恭喜你，完成所有匹配!');
+                }
+            } else {
+                // 匹配失败
+                console.log('匹配失败!');
+                setTimeout(() => {
+                    wordCard.classList.remove('selected');
+                    translationCard.classList.remove('selected');
+                }, 500);
+            }
+            
+            // 重置选中状态
+            window.gameState.selectedWord = null;
+            window.gameState.selectedTranslation = null;
+        }
+    </script>
+    
+    <script>
+        // 检查用户是否已登录
+        document.addEventListener('DOMContentLoaded', function() {
             // 绑定按钮事件
             document.getElementById('login-button').addEventListener('click', function() {
                 window.location.href = 'login.html';
@@ -188,17 +356,39 @@
                 window.location.href = 'register.html';
             });
             
-            // 加载默认单词
-            fetch('/api/words/default')
-                .then(response => response.json())
-                .then(words => {
-                    // 保存单词到全局变量供游戏使用
-                    window.defaultWordPairs = words;
-                })
-                .catch(error => {
-                    console.error('获取默认单词失败:', error);
-                    // 使用脚本中的默认单词作为备用
-                });
+            // 绑定卡片点击事件
+            const wordsContainer = document.getElementById('words-container');
+            const translationsContainer = document.getElementById('translations-container');
+            
+            if (wordsContainer) {
+                wordsContainer.addEventListener('click', handleWordCardClick);
+            }
+            
+            if (translationsContainer) {
+                translationsContainer.addEventListener('click', handleTranslationCardClick);
+            }
+            
+            // 优化默认单词加载 - 减少数量，添加缓存逻辑
+            const cachedWords = sessionStorage.getItem('defaultWords');
+            if (cachedWords) {
+                // 使用缓存的单词
+                window.defaultWordPairs = JSON.parse(cachedWords);
+                console.log('使用缓存的默认单词');
+            } else {
+                // 没有缓存，从API获取
+                fetch('/api/words/default')
+                    .then(response => response.json())
+                    .then(words => {
+                        // 保存单词到全局变量供游戏使用
+                        window.defaultWordPairs = words;
+                        // 缓存到会话存储中
+                        sessionStorage.setItem('defaultWords', JSON.stringify(words));
+                    })
+                    .catch(error => {
+                        console.error('获取默认单词失败:', error);
+                        // 使用脚本中的默认单词作为备用
+                    });
+            }
             
             // 开始游戏按钮点击事件
             document.getElementById('start-game').addEventListener('click', function() {
@@ -210,10 +400,12 @@
                     // 调用游戏初始化函数
                     if (typeof window.startGameWithWords === 'function') {
                         // 限制使用的单词数量
-                        const limitedWords = window.defaultWordPairs.slice(0, Math.min(window.defaultWordPairs.length, 20));
+                        const limitedWords = window.defaultWordPairs.slice(0, Math.min(window.defaultWordPairs.length, parseInt(wordCount)));
                         window.startGameWithWords(limitedWords, difficulty);
                     } else {
                         console.error('游戏初始化函数未定义');
+                        // 使用自定义函数启动游戏
+                        startGame(limitedWords, difficulty);
                     }
                 } else {
                     // 如果API获取失败，使用script.js中的默认单词
@@ -221,9 +413,103 @@
                         window.startGame();
                     } else {
                         console.error('游戏初始化函数未定义');
+                        // 使用默认单词启动游戏
+                        const defaultWords = [
+                            { word: "apple", translation: "苹果" },
+                            { word: "banana", translation: "香蕉" },
+                            { word: "orange", translation: "橙子" },
+                            { word: "grape", translation: "葡萄" },
+                            { word: "peach", translation: "桃子" }
+                        ];
+                        startGame(defaultWords, difficulty);
                     }
                 }
             });
+            
+            // 自定义游戏启动函数
+            function startGame(words, difficulty) {
+                console.log('使用自定义函数启动游戏，单词数量:', words.length);
+                
+                // 设置游戏状态
+                window.gameState.started = true;
+                window.gameState.timeRemaining = difficulty === 'easy' ? 90 : (difficulty === 'hard' ? 30 : 60);
+                window.gameState.score = 0;
+                window.gameState.matchedPairs = 0;
+                window.gameState.selectedWord = null;
+                window.gameState.selectedTranslation = null;
+                
+                // 更新显示
+                const timerValue = document.getElementById('timer-value');
+                const scoreValue = document.getElementById('score-value');
+                
+                if (timerValue) timerValue.textContent = window.gameState.timeRemaining;
+                if (scoreValue) scoreValue.textContent = '0';
+                
+                // 创建卡片
+                createGameCards(words);
+                
+                // 开始计时器
+                if (window.gameState.timer) {
+                    clearInterval(window.gameState.timer);
+                }
+                
+                window.gameState.timer = setInterval(() => {
+                    // 更新时间
+                    window.gameState.timeRemaining--;
+                    if (timerValue) timerValue.textContent = window.gameState.timeRemaining;
+                    
+                    // 检查游戏是否结束
+                    if (window.gameState.timeRemaining <= 0) {
+                        clearInterval(window.gameState.timer);
+                        alert('时间到！游戏结束！');
+                    }
+                }, 1000);
+            }
+            
+            // 创建游戏卡片
+            function createGameCards(words) {
+                const wordsContainer = document.getElementById('words-container');
+                const translationsContainer = document.getElementById('translations-container');
+                
+                if (!wordsContainer || !translationsContainer) {
+                    console.error('找不到卡片容器元素');
+                    return;
+                }
+                
+                // 清空容器
+                wordsContainer.innerHTML = '';
+                translationsContainer.innerHTML = '';
+                
+                // 随机排序单词和翻译
+                const shuffledWords = [...words].sort(() => Math.random() - 0.5);
+                const shuffledTranslations = [...words].sort(() => Math.random() - 0.5);
+                
+                // 创建单词卡片
+                shuffledWords.forEach(word => {
+                    const card = document.createElement('div');
+                    card.className = 'card';
+                    card.dataset.word = word.word;
+                    card.dataset.translation = word.translation;
+                    card.textContent = word.word;
+                    wordsContainer.appendChild(card);
+                });
+                
+                // 创建翻译卡片
+                shuffledTranslations.forEach(word => {
+                    const card = document.createElement('div');
+                    card.className = 'card';
+                    card.dataset.word = word.word;
+                    card.dataset.translation = word.translation;
+                    card.textContent = word.translation;
+                    translationsContainer.appendChild(card);
+                });
+            }
+            
+            // 实现自定义startGameWithWords函数
+            window.startGameWithWords = function(wordsList, difficulty) {
+                console.log('启动游戏，单词数量:', wordsList.length);
+                startGame(wordsList, difficulty);
+            };
         });
     </script>
     <script src="script.js"></script>

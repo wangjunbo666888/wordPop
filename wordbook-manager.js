@@ -33,7 +33,7 @@ window.startGameWithWords = function(wordsList, difficulty) {
     
     // 重置游戏状态
     window.gameState = {
-        started: false,
+        started: true,
         timeRemaining: window.difficultySettings[window.gameDifficulty].time,
         score: 0,
         selectedWord: null,
@@ -44,6 +44,8 @@ window.startGameWithWords = function(wordsList, difficulty) {
         errorRecords: {},
         comboCount: 0
     };
+    
+    console.log('游戏状态已初始化:', window.gameState);
     
     // 更新界面
     window.updateTimerDisplay();

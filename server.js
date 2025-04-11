@@ -892,7 +892,11 @@ app.post('/api/words/system', authenticateToken, (req, res) => {
         unit: row.unit,
         volume: row.volume
       }));
-      
+      logInfo('API', '获取系统单词成功', {
+        wordCount: wordPairs.length,
+        grade,
+        textbook_type
+      });
       res.json(wordPairs);
     }
   );
