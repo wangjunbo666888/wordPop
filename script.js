@@ -283,13 +283,33 @@ function createCards() {
     // 获取当前设置的单词数量
     const wordCount = gameData.wordCount;
     
-    // 如果词库中的单词不够，使用所有可用单词
-    const actualWordCount = Math.min(wordCount, gameData.wordPairs.length);
+    // 检查是否使用系统单词库（从localStorage获取设置）
+    let useSystemWords = false;
+    try {
+        const savedSource = localStorage.getItem('word_source');
+        if (savedSource) {
+            const parsed = JSON.parse(savedSource);
+            useSystemWords = parsed.useSystemWords;
+        }
+    } catch (error) {
+        console.error('解析单词源设置出错:', error);
+    }
     
-    // 随机选择指定数量的单词
-    const selectedPairs = [...gameData.wordPairs]
-        .sort(() => Math.random() - 0.5)
-        .slice(0, actualWordCount);
+    // 如果使用系统单词且词库中的单词多于需要的数量，则限制数量
+    // 否则使用所有可用单词
+    let selectedPairs;
+    if (useSystemWords && gameData.wordPairs.length > wordCount) {
+        // 随机选择指定数量的单词
+        selectedPairs = [...gameData.wordPairs]
+            .sort(() => Math.random() - 0.5)
+            .slice(0, wordCount);
+        
+        console.log(`使用系统单词库，限制数量为${wordCount}个`);
+    } else {
+        // 使用所有可用单词
+        selectedPairs = [...gameData.wordPairs];
+        console.log(`不使用系统单词库或单词不足，使用全部${selectedPairs.length}个单词`);
+    }
     
     // 复制并打乱选定的单词
     const shuffledWords = [...selectedPairs].sort(() => Math.random() - 0.5);

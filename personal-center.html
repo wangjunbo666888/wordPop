@@ -453,12 +453,7 @@
             // 设置教材版本和手机号
             userTextbook.textContent = user.textbook_type || '默认版本';
             
-            // 格式化手机号为 134****1234 格式
-            const formatPhone = (phone) => {
-                if (!phone || phone.length !== 11) return '未设置';
-                return `${phone.substring(0, 3)}****${phone.substring(7)}`;
-            };
-            userPhone.textContent = formatPhone(user.phone);
+            userPhone.textContent = user.phone;
             
             // 格式化注册时间
             const formatDate = (dateString) => {
@@ -667,6 +662,7 @@
         // 加载单词本列表
         function loadWordbooks() {
             const wordbookList = document.getElementById('wordbook-list');
+            console.log('单词本信息 wordbookList=',wordbookList);
             if (!wordbookList) return;
             
             // 显示加载中提示
@@ -691,8 +687,7 @@
                 }
                 return response.json();
             })
-            .then(data => {
-                const wordbooks = data.wordbooks || [];
+            .then(wordbooks => {
                 console.log(`成功获取${wordbooks.length}个单词本`);
                 
                 // 清空容器

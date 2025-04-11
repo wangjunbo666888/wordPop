@@ -1333,23 +1333,23 @@
             }
         }
         
+        // 默认单词列表定义
+        const defaultWords = [
+            { word: "apple", translation: "苹果" },
+            { word: "banana", translation: "香蕉" },
+            { word: "orange", translation: "橙子" },
+            { word: "grape", translation: "葡萄" },
+            { word: "peach", translation: "桃子" },
+            { word: "watermelon", translation: "西瓜" },
+            { word: "strawberry", translation: "草莓" },
+            { word: "pineapple", translation: "菠萝" },
+            { word: "cherry", translation: "樱桃" },
+            { word: "blueberry", translation: "蓝莓" }
+        ];
+
         // 开始游戏
         function startGameWithSelectedSource(useSystemWords, wordbooks, wordCount) {
             console.log('开始游戏，使用系统单词:', useSystemWords, '选中的单词本:', wordbooks, '单词数量:', wordCount);
-            
-            // 默认单词，当API失败时使用
-            const defaultWords = [
-                { word: "apple", translation: "苹果" },
-                { word: "banana", translation: "香蕉" },
-                { word: "orange", translation: "橙子" },
-                { word: "grape", translation: "葡萄" },
-                { word: "peach", translation: "桃子" },
-                { word: "watermelon", translation: "西瓜" },
-                { word: "strawberry", translation: "草莓" },
-                { word: "pineapple", translation: "菠萝" },
-                { word: "cherry", translation: "樱桃" },
-                { word: "blueberry", translation: "蓝莓" }
-            ];
             
             // 获取单词
             return Promise.all([
@@ -1361,10 +1361,20 @@
                 console.log('获取到系统单词:', systemWords);
                 console.log('获取到单词本单词:', wordbookWords);
                 
-                // 合并单词
-                let allWords = [...systemWords, ...wordbookWords];
+                // 处理单词源
+                let allWords = [];
                 
-                // 如果没有获取到单词，则使用默认单词
+                // 如果选择了系统单词，添加系统单词
+                if (useSystemWords) {
+                    allWords = [...systemWords];
+                }
+                
+                // 如果选择了单词本，添加单词本单词
+                if (wordbooks.length > 0) {
+                    allWords = [...allWords, ...wordbookWords];
+                }
+                
+                // 如果没有获取到任何单词，则使用默认单词
                 if (allWords.length === 0) {
                     console.log('未能获取到任何单词，使用默认单词');
                     allWords = [...defaultWords];
@@ -1380,16 +1390,22 @@
                 });
                 
                 allWords = Object.values(wordMap);
+                console.log(`去重后有${allWords.length}个单词`);
                 
                 // 打乱顺序
                 allWords.sort(() => Math.random() - 0.5);
                 
-                // 限制单词数量
-                if (wordCount && wordCount > 0) {
+                // 只有在用户选择的单词总数少于指定数量，且用户选择了使用系统单词时，才截取到指定的数量
+                // 如果用户只选择了单词本，则使用实际获取到的单词数量，不强制填充到指定数量
+                if (useSystemWords && wordCount > 0 && allWords.length > wordCount) {
+                    console.log(`用户选择了系统单词库，限制单词数量从${allWords.length}个到${wordCount}个`);
                     allWords = allWords.slice(0, wordCount);
+                } else if (!useSystemWords && wordbooks.length > 0) {
+                    console.log(`用户只选择了单词本，使用实际获取到的${allWords.length}个单词`);
+                    // 这里不再自动填充到指定数量
                 }
                 
-                console.log(`加载了${allWords.length}个单词:`, allWords);
+                console.log(`最终加载了${allWords.length}个单词:`, allWords);
                 
                 // 开始游戏，直接使用本地实现
                 // 设置单词对

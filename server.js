@@ -484,7 +484,8 @@ app.post('/api/users/login', (req, res) => {
             id: user.id, 
             nickname: user.nickname, 
             grade: user.grade,
-            textbook_type: user.textbook_type  // 添加教材版本信息到令牌
+            textbook_type: user.textbook_type,  // 添加教材版本信息到令牌
+            created_at: user.created_at
           },
           JWT_SECRET,
           { expiresIn: '24h' }
@@ -494,7 +495,8 @@ app.post('/api/users/login', (req, res) => {
           userId: user.id,
           nickname: user.nickname,
           grade: user.grade,
-          textbook_type: user.textbook_type
+          textbook_type: user.textbook_type,
+          created_at: user.created_at
         });
         
         res.json({
@@ -504,7 +506,8 @@ app.post('/api/users/login', (req, res) => {
             nickname: user.nickname,
             grade: user.grade,
             textbook_type: user.textbook_type,  // 在返回给前端的信息中也添加教材版本
-            phone: user.phone
+            phone: user.phone,
+            created_at: user.created_at
           },
           token
         });
@@ -549,7 +552,7 @@ app.get('/api/users/me', authenticateToken, (req, res) => {
  */
 app.get('/api/wordbooks', authenticateToken, (req, res) => {
   const userId = req.user.id;
-  
+  console.log('获取用户单词本列表 userId=',userId);
   pool.query(
     'SELECT id, name, description, is_default, created_at, updated_at FROM user_wordbooks WHERE user_id = ? ORDER BY is_default DESC, created_at DESC',
     [userId],
@@ -558,7 +561,7 @@ app.get('/api/wordbooks', authenticateToken, (req, res) => {
         console.error('获取单词本列表失败:', err);
         return res.status(500).json({ error: '获取单词本列表失败', details: err.message });
       }
-      
+      console.log('获取用户单词本列表 results=',results);
       res.json(results);
     }
   );
@@ -910,6 +913,7 @@ app.post('/api/words/system', authenticateToken, (req, res) => {
 app.get('/api/wordbooks/:wordbookId/words', authenticateToken, (req, res) => {
   const userId = req.user.id;
   const wordbookId = req.params.wordbookId;
+  console.log('获取用户单词本中的单词 wordbookId=',wordbookId,'userId=',userId);
   
   // 验证单词本所有权
   pool.query(
